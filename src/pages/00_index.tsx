@@ -23,8 +23,8 @@ export default function Index00() {
       <section className="hero">
         <FloralArch width={230} />
         <span className="badge">{BRAND.team}</span>
-        <h1>{BRAND.name}</h1>
         <p className="hero-en">{BRAND.en}</p>
+        <h1>{BRAND.name}</h1>
         <span className="divider">
           <FloralDivider />
         </span>
