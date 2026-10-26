@@ -8,7 +8,7 @@ import { PIECES, STAGE_LABEL, TYPE_LABEL, pathFor } from '../pieces'
 import { type PieceType, type Stage, useStore } from '../store'
 
 const STAGES: Stage[] = ['01', '02', '03', '04']
-const PRD_STAGES: Stage[] = ['05', '06', '07', '08', '10', '09']
+const TOOL_STAGES: Stage[] = ['05', '06', '07', '10', '08', '09']
 const TYPES: PieceType[] = ['chat', 'card']
 
 // 조각 목록 + 조립기. 단계마다 타입을 골라 이어 붙인 흐름을 바로 돌려 본다.
@@ -103,14 +103,14 @@ export default function Index00() {
       ))}
 
       <div className="section-title">
-        <span className="num">PRD</span>
+        <span className="num">Tools</span>
         <h3>결혼 준비 도구</h3>
       </div>
       <p className="sub" style={{ margin: 0 }}>
-        PRD 화면이에요. 04 부터는 아래쪽 탭으로 오가요.
+        견적부터 본식 날까지 챙기는 도구예요. 04 부터는 아래쪽 탭으로 오가요.
       </p>
       <div className="grid-pieces">
-        {PRD_STAGES.map((st) => {
+        {TOOL_STAGES.map((st) => {
           const p = PIECES.find((x) => x.path === pathFor(st, 'card'))!
           return (
             <Link key={p.path} to={`/${p.path}`} className="card piece-card">

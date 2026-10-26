@@ -12,6 +12,7 @@ const SECTIONS = [...new Set(QUESTIONS.map((q) => q.section))]
 
 export default function CardChecklist01() {
   const answers = useStore((s) => s.answers)
+  const answerFiles = useStore((s) => s.answerFiles)
   const progress = useStore((s) => s.progress)
   const setProgress = useStore((s) => s.setProgress)
   const finishChecklist = useStore((s) => s.finishChecklist)
@@ -21,7 +22,7 @@ export default function CardChecklist01() {
 
   const q = QUESTIONS[index]
   const last = index === QUESTIONS.length - 1
-  const answered = summarize(q, answers) !== ''
+  const answered = summarize(q, answers, answerFiles) !== ''
 
   function goNext() {
     setProgress(index + 1)

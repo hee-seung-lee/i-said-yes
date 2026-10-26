@@ -35,7 +35,7 @@ export default function CardData09() {
       // PRD 초기 데이터의 project(weddingDate 등)와 이 앱의 내보내기 데이터를 모두 받는다
       const others: Partial<PersistedShape> = {}
       if (data.app === 'i-said-yes') {
-        for (const k of ['answers', 'project', 'quotes', 'chosen', 'contracts', 'dayof', 'selectedPlan', 'checklistDone', 'progress'] as const) if (k in data) (others as Record<string, unknown>)[k] = data[k]
+        for (const k of ['answers', 'answerFiles', 'project', 'quotes', 'chosen', 'contracts', 'dayof', 'selectedPlan', 'checklistDone', 'progress'] as const) if (k in data) (others as Record<string, unknown>)[k] = data[k]
       } else if (data.project && typeof data.project === 'object') {
         const p = data.project
         others.project = {
@@ -61,7 +61,7 @@ export default function CardData09() {
 
       <section className="card" style={{ display: 'flex', flexDirection: 'column', gap: 10, padding: 18 }}>
         <h3 style={{ margin: 0 }}>가져오기</h3>
-        <div className="sub">이 앱에서 내보낸 JSON 이나 PRD 초기 데이터 JSON 을 넣으세요. 같은 원본 링크(없으면 같은 id)는 하나로 합쳐요.</div>
+        <div className="sub">이 앱에서 내보낸 파일이나 준비 목록 파일(JSON)을 넣으세요. 이미 있는 업무는 새로 만들지 않고 하나로 합쳐요.</div>
         <input
           id="import-file"
           type="file"
@@ -123,7 +123,7 @@ export default function CardData09() {
 
       <section className="card" style={{ display: 'flex', flexDirection: 'column', gap: 10, padding: 18 }}>
         <h3 style={{ margin: 0 }}>처음부터</h3>
-        <div className="sub">체크리스트 답, 일정, 견적, 계약, 예산을 모두 지우고 PRD 초기 데이터로 돌아가요.</div>
+        <div className="sub">체크리스트 답, 일정, 견적, 계약, 예산, 올린 사진을 모두 지우고 처음 준비 목록으로 돌아가요.</div>
         {confirmReset ? (
           <div className="row">
             <button onClick={() => setConfirmReset(false)}>취소</button>

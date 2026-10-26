@@ -7,6 +7,8 @@ import type { PlanKey } from './logic/recommend'
 import type { Contract, Payment, Quote } from './logic/money'
 import { type Anchors, EMPTY_ANCHORS, todaySeoul } from './logic/schedule'
 import { EMPTY_PLACES, type MyPlaceKey, type MyPlaces, type Place } from './logic/geo'
+import { type Attachment, removeFile } from './logic/files'
+import { PHOTO_RECEIPT_ID, SYNC_KEYS, photoReceiptPatch } from './logic/sync'
 
 export type Stage = '01' | '02' | '03' | '04' | '05' | '06' | '07' | '08' | '09' | '10'
 export type PieceType = 'chat' | 'card'
@@ -27,6 +29,7 @@ export interface DayOf {
 
 interface State {
   answers: Answers
+  answerFiles: Record<string, Attachment[]> // 체크리스트 '참고 사진' 첨부(문항 키 → 첨부)
   progress: number
   checklistDone: boolean
   selectedPlan: PlanKey | null
@@ -39,6 +42,7 @@ interface State {
   dayof: DayOf
 
   setAnswer: (key: string, values: string[]) => void
+  setAnswerFiles: (key: string, f: (prev: Attachment[]) => Attachment[]) => void
   setProgress: (n: number) => void
   finishChecklist: () => void
   selectPlan: (key: PlanKey) => void
@@ -65,20 +69,22 @@ interface State {
   importAll: (data: Partial<PersistedShape>) => void
 }
 
-export type PersistedShape = Pick<State, 'answers' | 'progress' | 'checklistDone' | 'selectedPlan' | 'flow' | 'tasks' | 'project' | 'quotes' | 'chosen' | 'contracts' | 'dayof'>
+export type PersistedShape = Pick<State, 'answers' | 'answerFiles' | 'progress' | 'checklistDone' | 'selectedPlan' | 'flow' | 'tasks' | 'project' | 'quotes' | 'chosen' | 'contracts' | 'dayof'>
 
 // 2: 체크리스트 20문항으로 바뀜(1 의 답은 버린다)
 // 3: 일정(anchors·taskStatus) 추가
 // 4: PRD 업무 모델(tasks·project·quotes·contracts·dayof). 3 의 상태·기준일은 옮긴다
 // 5: 업무 메모·액션 아이템·문서 링크, 사용자 업무 추가·삭제. 4 의 업무에 빈 값을 채운다
 // 6: 우리 장소(project.places), 견적 위치·증빙 파일
-export const SCHEMA_VERSION = 6
+// 7: 체크리스트 참고 사진(answerFiles), 수령 희망일 → 보정본 수령 일정
+export const SCHEMA_VERSION = 7
 
 const defaultFlow: Record<Stage, PieceType> = { '01': 'card', '02': 'card', '03': 'card', '04': 'card', '05': 'card', '06': 'card', '07': 'card', '08': 'card', '09': 'card', '10': 'card' }
 const freshProject = (): Project => ({ anchors: { ...EMPTY_ANCHORS }, totalBudget: null, reserveBudget: null, budgetScope: { house: null, goods: null, trip: null }, places: { ...EMPTY_PLACES } })
 const freshDayOf = (): DayOf => ({ ceremonyTime: null, checked: {}, vendorCheck: {} })
 const fresh = () => ({
   answers: {},
+  answerFiles: {},
   progress: 0,
   checklistDone: false,
   selectedPlan: null,
@@ -97,12 +103,29 @@ export const useStore = create<State>()(
     (set) => ({
       ...fresh(),
       flow: defaultFlow,
-      setAnswer: (key, values) => set((s) => ({ answers: { ...s.answers, [key]: values }, selectedPlan: null })),
+      setAnswer: (key, values) =>
+        set((s) => {
+          const answers = { ...s.answers, [key]: values }
+          // 수령 희망일은 일정의 '보정본 수령'에 바로 반영한다
+          const patch = SYNC_KEYS.includes(key) ? photoReceiptPatch(answers) : null
+          const tasks = patch ? s.tasks.map((t) => (t.id === PHOTO_RECEIPT_ID ? { ...t, ...patch } : t)) : s.tasks
+          return { answers, tasks, selectedPlan: null }
+        }),
+      setAnswerFiles: (key, f) => set((s) => ({ answerFiles: { ...s.answerFiles, [key]: f(s.answerFiles[key] ?? []) } })),
       setProgress: (n) => set((s) => ({ progress: Math.max(s.progress, n) })),
       finishChecklist: () => set({ checklistDone: true }),
       selectPlan: (key) => set({ selectedPlan: key }),
       setFlow: (stage, type) => set((s) => ({ flow: { ...s.flow, [stage]: type } })),
-      reset: () => set(fresh()),
+      reset: () =>
+        set((s) => {
+          const all = [
+            ...Object.values(s.answerFiles).flat(),
+            ...s.tasks.flatMap((t) => t.docs ?? []),
+            ...s.quotes.flatMap((q) => q.files ?? []),
+          ]
+          for (const a of all) if (a.fileId) removeFile(a.fileId)
+          return fresh()
+        }),
 
       setAnchor: (key, value) => set((s) => ({ project: { ...s.project, anchors: { ...s.project.anchors, [key]: value } } })),
       setProject: (patch) => set((s) => ({ project: { ...s.project, ...patch } })),
@@ -191,6 +214,7 @@ export const useStore = create<State>()(
         if (version < 5) {
           out.tasks = (out.tasks as TaskRecord[]).map((t) => withDefaults(t.id === 'M05' ? { ...t, categories: ['본식 준비'] } : t))
         }
+        if (version < 7) out.answerFiles = (s.answerFiles as object) ?? {}
         if (version < 6) {
           const p = out.project as Project
           out.project = { ...p, places: { ...EMPTY_PLACES, ...(p.places ?? {}) } }
@@ -202,6 +226,6 @@ export const useStore = create<State>()(
 )
 
 export function persistedShape(s: State): PersistedShape {
-  const { answers, progress, checklistDone, selectedPlan, flow, tasks, project, quotes, chosen, contracts, dayof } = s
-  return { answers, progress, checklistDone, selectedPlan, flow, tasks, project, quotes, chosen, contracts, dayof }
+  const { answers, answerFiles, progress, checklistDone, selectedPlan, flow, tasks, project, quotes, chosen, contracts, dayof } = s
+  return { answers, answerFiles, progress, checklistDone, selectedPlan, flow, tasks, project, quotes, chosen, contracts, dayof }
 }

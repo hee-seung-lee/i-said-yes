@@ -1,6 +1,6 @@
 // 조각 목록. 파일·경로 이름 규칙 = 단계_타입_기능 (예: 01_chat_checklist).
 // 01~03 은 조원 의견(체크리스트 → 3가지 결과 → 지도)에서 나온 대화형·카드형 시안,
-// 04 부터는 PRD 화면(오늘 할 일·전체 타임라인, 견적 비교, 결정 도우미, 예산, 본식 체크, 데이터)이다.
+// 04 부터는 결혼 준비 도구(PRD 화면:오늘 할 일·전체 타임라인, 견적 비교, 결정 도우미, 예산, 본식 체크, 데이터)이다.
 // 새 조각을 만들면 여기에 한 줄 추가하고 App.tsx 라우트에 연결한다.
 import type { PieceType, Stage } from './store'
 
@@ -67,7 +67,7 @@ export const HUB: { stage: Stage; label: string; icon: string }[] = [
   { stage: '05', label: '견적', icon: '₩' },
   { stage: '06', label: '결정', icon: '♡' },
   { stage: '07', label: '예산', icon: '◔' },
-  { stage: '08', label: '본식', icon: '💍' },
   { stage: '10', label: '장소', icon: '📍' },
+  { stage: '08', label: '본식', icon: '💍' },
   { stage: '09', label: '데이터', icon: '⇅' },
 ]

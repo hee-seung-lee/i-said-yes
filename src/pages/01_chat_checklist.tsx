@@ -11,6 +11,7 @@ import { useStore } from '../store'
 
 export default function ChatChecklist01() {
   const answers = useStore((s) => s.answers)
+  const answerFiles = useStore((s) => s.answerFiles)
   const progress = useStore((s) => s.progress)
   const setProgress = useStore((s) => s.setProgress)
   const finishChecklist = useStore((s) => s.finishChecklist)
@@ -39,7 +40,7 @@ export default function ChatChecklist01() {
         </div>
         {QUESTIONS.slice(0, Math.min(step + 1, QUESTIONS.length)).map((q, i) => {
           const open = i === step || editing === q.id
-          const text = summarize(q, answers)
+          const text = summarize(q, answers, answerFiles)
           return (
             <div key={q.id} className="chat">
               <div className="bubble">

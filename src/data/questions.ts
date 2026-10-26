@@ -5,7 +5,8 @@ export const NONE = 'none'
 // 예식장이 이미 정해진 경우(교회·성당 등). 예식장 추천을 생략한다.
 export const OWN_VENUE = 'own'
 
-export type FieldKind = 'single' | 'multi' | 'number' | 'text'
+// photos: 사진·파일 첨부 + 메모 한 줄(첨부는 store.answerFiles 에), date: 날짜
+export type FieldKind = 'single' | 'multi' | 'number' | 'text' | 'photos' | 'date'
 
 export interface Option {
   value: string
@@ -87,7 +88,7 @@ export const QUESTIONS: Question[] = [
       },
       { id: 'ceiling', label: '천고', kind: 'single', options: o([['high', '높았으면'], [UNKNOWN, '상관없음']]) },
       { id: 'aisle', label: '버진로드', kind: 'single', options: o([['long', '길었으면'], ['short', '짧아도 됨'], [UNKNOWN, '상관없음']]) },
-      { id: 'ref', label: '참고 사진', kind: 'text', placeholder: '링크나 메모' },
+      { id: 'ref', label: '참고 사진', kind: 'photos', placeholder: '메모(선택)' },
     ],
   },
   {
@@ -134,7 +135,7 @@ export const QUESTIONS: Question[] = [
       { id: 'space', label: '공간', kind: 'single', options: o([['indoor', '실내'], ['outdoor', '야외'], ['both', '둘 다']]) },
       { id: 'want', label: '원하는 컷', kind: 'text' },
       { id: 'avoid', label: '피하고 싶은 포즈', kind: 'text' },
-      { id: 'ref', label: '참고 사진', kind: 'text', placeholder: '링크나 메모' },
+      { id: 'ref', label: '참고 사진', kind: 'photos', placeholder: '메모(선택)' },
     ],
   },
   {
@@ -144,7 +145,9 @@ export const QUESTIONS: Question[] = [
       { id: 'count', label: '보정본 수', kind: 'single', options: o([['lt20', '20장 이하'], ['20to40', '20~40장'], ['gt40', '40장 이상']]) },
       { id: 'album', label: '앨범·액자', kind: 'multi', options: o([['album', '앨범'], ['frame', '액자']]) },
       { id: 'level', label: '보정 강도', kind: 'single', options: o([['light', '자연스럽게'], ['mid', '보통'], ['strong', '강하게']]) },
-      { id: 'due', label: '수령 희망일', kind: 'text', placeholder: '본식 2개월 전' },
+      // 답하면 일정의 '보정본 수령'(M02)이 채택되고 마감이 맞춰진다(logic/sync.ts)
+      { id: 'due', label: '수령 희망일', kind: 'single', options: o([['90', '본식 3개월 전'], ['60', '본식 2개월 전'], ['45', '본식 6주 전'], ['30', '본식 1개월 전']]) },
+      { id: 'dueDate', label: '또는 날짜로', kind: 'date' },
       { id: 'publish', label: '사진 공개 동의', kind: 'single', options: o([['yes', '동의'], ['no', '비동의']]) },
     ],
   },
@@ -156,7 +159,7 @@ export const QUESTIONS: Question[] = [
       { id: 'neckline', label: '네크라인', kind: 'multi', options: o([['offshoulder', '오프숄더'], ['vneck', '브이넥'], ['highneck', '하이넥'], ['square', '스퀘어']]) },
       { id: 'sleeve', label: '소매', kind: 'single', options: o([['none', '민소매'], ['short', '반소매'], ['long', '긴소매'], [UNKNOWN, '상관없음']]) },
       { id: 'exposure', label: '노출 정도', kind: 'single', options: o([['low', '적게'], ['mid', '보통'], [UNKNOWN, '상관없음']]) },
-      { id: 'ref', label: '참고 사진', kind: 'text', placeholder: '링크나 메모' },
+      { id: 'ref', label: '참고 사진', kind: 'photos', placeholder: '메모(선택)' },
     ],
   },
   {
@@ -274,10 +277,16 @@ export function toggleValue(f: Field, current: string[], value: string): string[
 }
 
 // 한 문항의 답을 한 줄로. 비었으면 빈 문자열.
-export function summarize(q: Question, answers: Answers): string {
+// files: 사진 첨부 수(문항 키 → 개수). 사진만 올린 문항도 답한 것으로 본다.
+export function summarize(q: Question, answers: Answers, files: Record<string, unknown[]> = {}): string {
   return q.fields
     .map((f) => {
       const vals = get(answers, key(q, f)).filter((v) => v !== '')
+      if (f.kind === 'photos') {
+        const n = files[key(q, f)]?.length ?? 0
+        const parts = [n ? `사진 ${n}장` : '', vals[0] ?? ''].filter(Boolean)
+        return parts.length ? `${f.label} ${parts.join(' · ')}` : ''
+      }
       if (vals.length === 0) return ''
       const text = f.kind === 'number' ? `${Number(vals[0]).toLocaleString()}${f.unit ?? ''}` : f.options ? vals.map((v) => labelOf(key(q, f), v)).join('·') : vals[0]
       return `${f.label} ${text}`
@@ -286,6 +295,6 @@ export function summarize(q: Question, answers: Answers): string {
     .join(', ')
 }
 
-export function answeredCount(answers: Answers): number {
-  return QUESTIONS.filter((q) => summarize(q, answers) !== '').length
+export function answeredCount(answers: Answers, files: Record<string, unknown[]> = {}): number {
+  return QUESTIONS.filter((q) => summarize(q, answers, files) !== '').length
 }
