@@ -15,8 +15,13 @@ export function Layout({ piece, wide, children }: Props) {
       <Sprig className="corner bl" />
       <header className="top">
         <RingsMark size={26} />
-        <span className="name">{BRAND.name}</span>
-        {piece && <span className="piece">{piece}</span>}
+        <span className="title-stack">
+          <span className="name">{BRAND.name}</span>
+          <span className="en">
+            {BRAND.en}
+            {piece && <span className="piece"> · {piece}</span>}
+          </span>
+        </span>
         <span className="spacer" />
         <Link to="/">조각 목록</Link>
       </header>

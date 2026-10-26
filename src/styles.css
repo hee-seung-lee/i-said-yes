@@ -77,7 +77,9 @@ button:disabled { opacity: 0.45; cursor: default; }
 
 .top { position: relative; display: flex; align-items: center; gap: 10px; padding: 16px 20px 12px; color: var(--gold); }
 .top .name { font-family: var(--serif); font-weight: 700; font-size: 17px; color: var(--ink); }
-.top .piece { font-family: var(--script); font-style: italic; font-size: 13px; color: var(--ink-3); }
+.top .title-stack { display: flex; flex-direction: column; line-height: 1.2; min-width: 0; }
+.top .en { font-family: var(--script); font-style: italic; font-size: 15px; color: var(--gold); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.top .piece { font-size: 13px; color: var(--ink-3); }
 .top .spacer { flex: 1; }
 .top a { font-size: 13px; text-decoration: none; color: var(--rose); }
 .notice { position: relative; margin: 0 20px; padding-right: 0; padding: 8px 0 10px; font-size: 12px; line-height: 1.5; color: var(--ink-3); border-bottom: 1px solid var(--line); text-align: center; }
