@@ -190,6 +190,13 @@ export function rangeText(r: Resolved): string {
   return `${dLabel(r.startDays, r.anchorLabel)} ~ ${dLabel(r.dueDays, r.anchorLabel)}`
 }
 
+// 간트 막대 위치: '본식 며칠 전' 두 값(start ≥ end). 본식일과 실제 날짜가 있으면 날짜로, 없으면 본식 기준 D-일수로.
+// 별도 기준일 업무도 본식일이 있으면 날짜로 환산돼 같은 축에 놓인다.
+export function ganttSpan(task: TaskRecord, r: Resolved, anchors: Anchors): { start: number; end: number } {
+  if (anchors.wedding && r.start && r.due) return { start: daysBetween(r.start, anchors.wedding), end: daysBetween(r.due, anchors.wedding) }
+  return { start: task.startDaysBefore, end: task.dueDaysBefore }
+}
+
 // 달력: 해당 월의 날짜 칸(앞뒤 빈칸 포함)
 export function monthGrid(year: number, month: number): (string | null)[] {
   const first = new Date(Date.UTC(year, month - 1, 1, 12))

@@ -1,10 +1,10 @@
 // 일정·할 일 화면 부품. PRD: 오늘 할 일, 전체 타임라인, 업무 상세 편집, 기준일·재계산 미리보기, 압축 계획, 선행 관계.
 import { useMemo, useState } from 'react'
 import { Link } from 'react-router-dom'
-import { ANCHOR_LABEL, type AnchorKey, type Owner, type TaskRecord, type TaskStatus } from '../data/tasks'
+import { ANCHOR_LABEL, type AnchorKey, CATEGORIES, type Owner, type TaskRecord, type TaskStatus } from '../data/tasks'
 import { celebrateFrom } from '../effects/petals'
 import { needsPurchase } from '../logic/decide'
-import { fmt, toMan, toWon } from '../logic/money'
+import { fmt, newId, toMan, toWon } from '../logic/money'
 import { buildPlans, recommendedKey } from '../logic/recommend'
 import {
   type Anchors,
@@ -66,10 +66,15 @@ export function StatusDot({ item, onBlocked }: { item: TodoItem; onBlocked?: (ms
   )
 }
 
-function Tags({ item }: { item: TodoItem }) {
+export function Tags({ item }: { item: TodoItem }) {
   const t = item.task
   return (
     <>
+      {t.categories.map((c) => (
+        <span key={c} className="tag cat">
+          {c}
+        </span>
+      ))}
       {item.r.anchorLabel !== '본식' && <span className="tag">{item.r.anchorLabel} 기준</span>}
       {item.overdue && <span className="tag warn">기한 지남</span>}
       {item.blockedBy.length > 0 && <span className="tag warn">막힘</span>}
@@ -78,6 +83,13 @@ function Tags({ item }: { item: TodoItem }) {
       {t.origin === 'proposed' && <span className="tag">제안</span>}
       {t.ownerIds.length > 0 && <span className="tag">{t.ownerIds.join('·')}</span>}
       {t.budget !== null && <span className="tag">예산 {fmt(t.budget)}</span>}
+      {t.actionItems.length > 0 && (
+        <span className="tag">
+          ☑ {t.actionItems.filter((a) => a.done).length}/{t.actionItems.length}
+        </span>
+      )}
+      {t.docs.length > 0 && <span className="tag">📎 {t.docs.length}</span>}
+      {t.memo.trim() && <span className="tag">메모</span>}
     </>
   )
 }
@@ -127,6 +139,24 @@ export function TaskDetail({ item }: { item: TodoItem }) {
 
   return (
     <div className="task-detail">
+      <TitleEditor task={t} />
+      <div className="field">
+        <span className="field-label">분류 (여러 개 고를 수 있어요)</span>
+        <div>
+          {CATEGORIES.map((c) => (
+            <span
+              key={c}
+              className={t.categories.includes(c) ? 'chip on' : 'chip'}
+              onClick={() => {
+                const next = t.categories.includes(c) ? t.categories.filter((x) => x !== c) : [...t.categories, c]
+                if (next.length) updateTask(t.id, { categories: next })
+              }}
+            >
+              {c}
+            </span>
+          ))}
+        </div>
+      </div>
       {item.suggestion && (
         <div className="suggest">
           {item.suggestion}. 이 일을 선택(본식 필수 아님)으로 바꿀까요?
@@ -257,6 +287,8 @@ export function TaskDetail({ item }: { item: TodoItem }) {
         {depErr && <span className="err">{depErr}</span>}
       </div>
 
+      <TaskPage task={t} />
+
       {needsPurchase(t) && (
         <div className="row" style={{ flexWrap: 'wrap' }}>
           <span className="sub grow">결정: {t.decisionStatus}</span>
@@ -264,8 +296,148 @@ export function TaskDetail({ item }: { item: TodoItem }) {
           <Link to={`/06_card_decide?task=${t.id}`}>결정 도우미</Link>
         </div>
       )}
+      <DeleteTask task={t} />
     </div>
   )
+}
+
+// 제목 고치기: 입력을 끝낼 때(Enter·포커스 이동) 저장. 비우면 원래대로 둔다.
+function TitleEditor({ task }: { task: TaskRecord }) {
+  const updateTask = useStore((s) => s.updateTask)
+  const [title, setTitle] = useState(task.title)
+  // 입력칸의 현재 값으로 저장한다(입력 직후 바로 포커스가 빠져도 이전 값이 저장되지 않게)
+  const save = (value: string) => (value.trim() ? updateTask(task.id, { title: value.trim() }) : setTitle(task.title))
+  return (
+    <label className="field">
+      <span className="field-label">업무 이름</span>
+      <input
+        id={`title-${task.id}`}
+        value={title}
+        onChange={(e) => setTitle(e.target.value)}
+        onBlur={(e) => save(e.currentTarget.value)}
+        onKeyDown={(e) => e.key === 'Enter' && save(e.currentTarget.value)}
+      />
+    </label>
+  )
+}
+
+// 노션 업무 페이지 템플릿: 프로젝트 정보 / 액션 아이템 / 문서
+function TaskPage({ task }: { task: TaskRecord }) {
+  const updateTask = useStore((s) => s.updateTask)
+  const [todo, setTodo] = useState('')
+  const [label, setLabel] = useState('')
+  const [url, setUrl] = useState('')
+  const [err, setErr] = useState('')
+  // 최신 업무로 고친다(연달아 눌러도 앞 변경을 잃지 않게)
+  const latest = () => useStore.getState().tasks.find((x) => x.id === task.id)!
+  const addTodo = () => {
+    if (!todo.trim()) return
+    updateTask(task.id, { actionItems: [...latest().actionItems, { id: newId('a'), text: todo.trim(), done: false }] })
+    setTodo('')
+  }
+  const addDoc = () => {
+    const u = url.trim()
+    if (!/^https?:\/\/\S+$/i.test(u)) return setErr('http:// 또는 https:// 로 시작하는 주소를 넣어 주세요')
+    updateTask(task.id, { docs: [...latest().docs, { id: newId('d'), label: label.trim() || hostOf(u), url: u }] })
+    setLabel('')
+    setUrl('')
+    setErr('')
+  }
+  const done = task.actionItems.filter((a) => a.done).length
+
+  return (
+    <div className="task-page">
+      <label className="field">
+        <span className="field-label">프로젝트 정보</span>
+        <textarea
+          id={`memo-${task.id}`}
+          rows={3}
+          value={task.memo}
+          placeholder="이 일의 목표와 맥락, 상담 메모"
+          onChange={(e) => updateTask(task.id, { memo: e.target.value })}
+        />
+      </label>
+
+      <div className="field">
+        <span className="field-label">
+          액션 아이템 {task.actionItems.length > 0 && `${done}/${task.actionItems.length}`}
+        </span>
+        {task.actionItems.map((a) => (
+          <div key={a.id} className="dep-row check">
+            <input
+              type="checkbox"
+              checked={a.done}
+              aria-label={a.text}
+              onChange={() => updateTask(task.id, { actionItems: latest().actionItems.map((x) => (x.id === a.id ? { ...x, done: !x.done } : x)) })}
+            />
+            <span className={`grow ${a.done ? 'is-checked' : ''}`}>{a.text}</span>
+            <button className="ghost" aria-label="액션 아이템 지우기" onClick={() => updateTask(task.id, { actionItems: latest().actionItems.filter((x) => x.id !== a.id) })}>
+              ✕
+            </button>
+          </div>
+        ))}
+        <div className="row">
+          <input id={`todo-${task.id}`} className="grow" value={todo} placeholder="할 일 한 줄" onChange={(e) => setTodo(e.target.value)} onKeyDown={(e) => e.key === 'Enter' && addTodo()} />
+          <button onClick={addTodo}>추가</button>
+        </div>
+      </div>
+
+      <div className="field">
+        <span className="field-label">문서</span>
+        {task.docs.map((d) => (
+          <div key={d.id} className="dep-row">
+            <a className="grow doc-link" href={d.url} target="_blank" rel="noopener noreferrer">
+              📎 {d.label}
+            </a>
+            <span className="muted">{hostOf(d.url)}</span>
+            <button className="ghost" aria-label="문서 지우기" onClick={() => updateTask(task.id, { docs: latest().docs.filter((x) => x.id !== d.id) })}>
+              ✕
+            </button>
+          </div>
+        ))}
+        <div className="row" style={{ flexWrap: 'wrap' }}>
+          <input id={`doc-label-${task.id}`} value={label} placeholder="이름 (견적서, 계약서)" onChange={(e) => setLabel(e.target.value)} style={{ flex: '1 1 120px' }} />
+          <input id={`doc-url-${task.id}`} value={url} placeholder="https:// 드라이브·PDF 링크" onChange={(e) => setUrl(e.target.value)} style={{ flex: '2 1 180px' }} />
+          <button onClick={addDoc}>첨부</button>
+        </div>
+        {err && <span className="err">{err}</span>}
+        <span className="muted">파일은 구글 드라이브 등에 올리고 링크를 붙여 주세요. 앱은 파일을 따로 저장하지 않아요.</span>
+      </div>
+    </div>
+  )
+}
+
+function DeleteTask({ task }: { task: TaskRecord }) {
+  const deleteTask = useStore((s) => s.deleteTask)
+  const [ask, setAsk] = useState(false)
+  if (!ask)
+    return (
+      <button className="ghost danger" onClick={() => setAsk(true)}>
+        이 업무 삭제
+      </button>
+    )
+  return (
+    <div className="preview-box">
+      <span className="sub">
+        '{task.title}'을 지울까요? 이 일을 기다리던 관계와 견적·계약 기록도 함께 지워져요.
+        {task.origin === 'source' && ' 원본 업무는 09 데이터에서 다시 가져오면 돌아와요.'}
+      </span>
+      <div className="row">
+        <button onClick={() => setAsk(false)}>취소</button>
+        <button className="primary" onClick={() => deleteTask(task.id)}>
+          삭제
+        </button>
+      </div>
+    </div>
+  )
+}
+
+function hostOf(u: string): string {
+  try {
+    return new URL(u).hostname.replace(/^www\./, '')
+  } catch {
+    return u
+  }
 }
 
 export function TodayCard({ pick, index }: { pick: Pick; index: number }) {

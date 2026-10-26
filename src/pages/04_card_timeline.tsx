@@ -12,18 +12,31 @@ import {
   TodayCard,
   useTodos,
 } from '../components/Timeline'
+import { AddTaskForm, CategoryFilter, GanttView, StatusBoard, byCategory } from '../components/Views'
 import { PHASES, type PhaseId } from '../data/tasks'
 
-// PRD 화면: 오늘 할 일 + 전체 타임라인(본식일 미정이면 상대 일정, 있으면 달력과 전환)
+type View = 'list' | 'board' | 'gantt' | 'calendar'
+// 노션 보기(표·상태별·타임라인)와 맞춘 보기 전환. 달력은 본식일이 있을 때만.
+const VIEWS: { id: View; label: string }[] = [
+  { id: 'list', label: '단계별' },
+  { id: 'board', label: '상태별' },
+  { id: 'gantt', label: '타임라인' },
+  { id: 'calendar', label: '달력' },
+]
+
+// PRD 화면: 오늘 할 일 + 전체 타임라인(본식일 미정이면 상대 일정, 있으면 날짜·달력)
 export default function CardTimeline04() {
   const { plan, items, picks, ready: rd, today, anchors } = useTodos()
   const [phase, setPhase] = useState<PhaseId>(() => picks[0]?.item.phase ?? 'p1')
-  const [view, setView] = useState<'list' | 'calendar'>('list')
+  const [view, setView] = useState<View>('list')
   const [showExcluded, setShowExcluded] = useState(false)
+  const [cats, setCats] = useState<string[]>([])
 
-  const visible = items.filter((i) => showExcluded || !i.task.excluded)
+  const filtered = byCategory(items, cats)
+  const visible = filtered.filter((i) => showExcluded || !i.task.excluded)
   const inPhase = visible.filter((i) => i.phase === phase).sort((a, b) => b.r.startDays - a.r.startDays)
-  const leftIn = (id: PhaseId) => items.filter((i) => i.phase === id && i.task.status !== '완료' && !i.task.excluded).length
+  const leftIn = (id: PhaseId) => filtered.filter((i) => i.phase === id && i.task.status !== '완료' && !i.task.excluded).length
+  const views = VIEWS.filter((v) => v.id !== 'calendar' || anchors.wedding)
   const excludedCount = items.filter((i) => i.task.excluded).length
 
   return (
@@ -55,19 +68,21 @@ export default function CardTimeline04() {
       <div className="section-title">
         <span className="num">Timeline</span>
         <h3 className="grow">전체 타임라인</h3>
-        {anchors.wedding && (
-          <span className="tabs">
-            <span className={view === 'list' ? 'chip on' : 'chip'} onClick={() => setView('list')}>
-              단계별
-            </span>
-            <span className={view === 'calendar' ? 'chip on' : 'chip'} onClick={() => setView('calendar')}>
-              달력
-            </span>
-          </span>
-        )}
       </div>
+      <div className="tabs view-tabs" role="tablist" aria-label="보기">
+        {views.map((v) => (
+          <span key={v.id} role="tab" aria-selected={view === v.id} className={view === v.id ? 'chip on' : 'chip'} onClick={() => setView(v.id)}>
+            {v.label}
+          </span>
+        ))}
+      </div>
+      <CategoryFilter value={cats} onChange={setCats} items={items} />
 
-      {view === 'calendar' && anchors.wedding ? (
+      {view === 'board' ? (
+        <StatusBoard items={visible} />
+      ) : view === 'gantt' ? (
+        <GanttView items={visible} anchors={anchors} today={today} />
+      ) : view === 'calendar' && anchors.wedding ? (
         <CalendarView items={visible} today={today} />
       ) : (
         <>
@@ -96,6 +111,7 @@ export default function CardTimeline04() {
         )}
       </div>
 
+      <AddTaskForm defaultCategory={cats.length === 1 ? cats[0] : undefined} />
       <MilestonePanel />
     </Layout>
   )

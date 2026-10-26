@@ -2,7 +2,7 @@
 import { create } from 'zustand'
 import { persist } from 'zustand/middleware'
 import type { Answers } from './data/questions'
-import { type AnchorKey, type TaskRecord, type TaskStatus, seedTasks } from './data/tasks'
+import { type AnchorKey, type TaskRecord, type TaskStatus, seedTasks, withDefaults } from './data/tasks'
 import type { PlanKey } from './logic/recommend'
 import type { Contract, Payment, Quote } from './logic/money'
 import { type Anchors, EMPTY_ANCHORS, todaySeoul } from './logic/schedule'
@@ -48,6 +48,8 @@ interface State {
   updateTask: (id: string, patch: Partial<TaskRecord>) => void
   setStatus: (id: string, status: TaskStatus) => void
   replaceTasks: (tasks: TaskRecord[]) => void
+  addTask: (t: TaskRecord) => void
+  deleteTask: (id: string) => void
 
   upsertQuote: (q: Quote) => void
   removeQuote: (id: string) => void
@@ -65,7 +67,8 @@ export type PersistedShape = Pick<State, 'answers' | 'progress' | 'checklistDone
 // 2: 체크리스트 20문항으로 바뀜(1 의 답은 버린다)
 // 3: 일정(anchors·taskStatus) 추가
 // 4: PRD 업무 모델(tasks·project·quotes·contracts·dayof). 3 의 상태·기준일은 옮긴다
-export const SCHEMA_VERSION = 4
+// 5: 업무 메모·액션 아이템·문서 링크, 사용자 업무 추가·삭제. 4 의 업무에 빈 값을 채운다
+export const SCHEMA_VERSION = 5
 
 const defaultFlow: Record<Stage, PieceType> = { '01': 'card', '02': 'card', '03': 'card', '04': 'card', '05': 'card', '06': 'card', '07': 'card', '08': 'card', '09': 'card' }
 const freshProject = (): Project => ({ anchors: { ...EMPTY_ANCHORS }, totalBudget: null, reserveBudget: null, budgetScope: { house: null, goods: null, trip: null } })
@@ -103,7 +106,23 @@ export const useStore = create<State>()(
       // 완료 시각은 완료로 바꿀 때 남기고, 되돌리면 지운다
       setStatus: (id, status) =>
         set((s) => ({ tasks: mapTask(s.tasks, id, (t) => ({ ...t, status, completedAt: status === '완료' ? (t.completedAt ?? todaySeoul()) : null })) })),
-      replaceTasks: (tasks) => set({ tasks }),
+      replaceTasks: (tasks) => set({ tasks: tasks.map(withDefaults) }),
+      addTask: (t) => set((s) => ({ tasks: [...s.tasks, t] })),
+      // 지운 업무를 기다리던 관계와 그 업무의 견적·계약도 함께 지운다
+      deleteTask: (id) =>
+        set((s) => {
+          const quoteIds = new Set(s.quotes.filter((q) => q.taskId === id).map((q) => q.id))
+          const contracts = { ...s.contracts }
+          delete contracts[id]
+          const chosen = { ...s.chosen }
+          delete chosen[id]
+          return {
+            tasks: s.tasks.filter((t) => t.id !== id).map((t) => ({ ...t, dependencies: t.dependencies.filter((d) => d.taskId !== id) })),
+            quotes: s.quotes.filter((q) => !quoteIds.has(q.id)),
+            chosen,
+            contracts,
+          }
+        }),
 
       upsertQuote: (q) => set((s) => ({ quotes: s.quotes.some((x) => x.id === q.id) ? s.quotes.map((x) => (x.id === q.id ? q : x)) : [...s.quotes, q] })),
       removeQuote: (id) =>
@@ -163,6 +182,9 @@ export const useStore = create<State>()(
           }
           delete out.anchors
           delete out.taskStatus
+        }
+        if (version < 5) {
+          out.tasks = (out.tasks as TaskRecord[]).map((t) => withDefaults(t.id === 'M05' ? { ...t, categories: ['본식 준비'] } : t))
         }
         return out as unknown as State
       },

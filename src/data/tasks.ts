@@ -8,6 +8,18 @@ export type AnchorKey = 'wedding' | 'familyMeeting' | 'shoot' | 'moveIn' | 'depa
 export type DecisionStatus = '미결정' | '비교 중' | '보류' | '선택함' | '계약 확인'
 export type Owner = '신랑' | '신부' | '둘이' | '가족'
 
+export interface ActionItem {
+  id: string
+  text: string
+  done: boolean
+}
+
+export interface DocLink {
+  id: string
+  label: string
+  url: string
+}
+
 export interface Dependency {
   taskId: string // 먼저 끝나야 하는 일
   type: 'hard' | 'soft' // hard 만 실행을 막는다
@@ -40,7 +52,14 @@ export interface TaskRecord {
   holdReason: string | null // 보류 시 막힌 기준 1개
   nextReviewDate: string | null
   excluded: boolean // 압축 계획에서 '제외'한 일
+  // 노션 업무 페이지 템플릿(프로젝트 정보 / 액션 아이템 / 문서)
+  memo: string
+  actionItems: ActionItem[]
+  docs: DocLink[]
 }
+
+// 노션 '분류' 다중 선택의 10가지(노션 순서)
+export const CATEGORIES = ['상견례', '웨딩 스케치', '홀 계약', '스드메 계약', '신혼집', '신혼여행', '본식 준비', '스튜디오 촬영', '드레스&예복', '청첩장 제작']
 
 type Row = [id: string, category: string, title: string, start: number, due: number]
 
@@ -146,6 +165,9 @@ function base(id: string, category: string, title: string, start: number, due: n
     holdReason: null,
     nextReviewDate: null,
     excluded: false,
+    memo: '',
+    actionItems: [],
+    docs: [],
   }
 }
 
@@ -155,7 +177,7 @@ const MILESTONES: Row[] = [
   ['M02', '스튜디오 촬영', '보정본 수령', 120, 90],
   ['M03', '본식 준비', '최종 업체 확인', 14, 7],
   ['M04', '본식 준비', '당일 진행표 만들기', 14, 3],
-  ['M05', '본식', '본식', 0, 0],
+  ['M05', '본식 준비', '본식', 0, 0],
 ]
 
 // 원본에 없지만 PRD 가 권하는 선행 관계. 모두 미확인(confirmed=false)으로 시작한다.
@@ -186,6 +208,32 @@ export function seedTasks(): TaskRecord[] {
     t.dependencies = SUGGESTED.filter(([id]) => id === t.id).map(([, prereq]) => ({ taskId: prereq, type: 'hard', confirmed: false }))
   }
   return tasks
+}
+
+export interface NewTaskInput {
+  title: string
+  categories: string[]
+  startDaysBefore: number
+  dueDaysBefore: number
+  requiredForWedding: boolean
+}
+
+// 사용자가 더하는 업무(origin=user). 검증에 걸리면 이유를 돌려준다.
+export function newUserTask(input: NewTaskInput, existing: TaskRecord[]): TaskRecord | string {
+  const title = input.title.trim()
+  if (!title) return '업무 이름을 넣어 주세요'
+  if (!Number.isFinite(input.startDaysBefore) || !Number.isFinite(input.dueDaysBefore)) return '일정을 숫자로 넣어 주세요'
+  if (input.startDaysBefore < input.dueDaysBefore) return '시작은 마감보다 앞(더 큰 D-숫자)이어야 해요'
+  let n = existing.length + 1
+  let id = `U${String(n).padStart(2, '0')}`
+  while (existing.some((t) => t.id === id)) id = `U${String(++n).padStart(2, '0')}`
+  const t = base(id, input.categories[0] ?? '본식 준비', title, input.startDaysBefore, input.dueDaysBefore)
+  return { ...t, categories: input.categories.length ? input.categories : ['본식 준비'], origin: 'user', scheduleOrigin: 'user', requiredForWedding: input.requiredForWedding }
+}
+
+// 예전 저장본·가져온 데이터에 새 필드가 없으면 채운다
+export function withDefaults(t: TaskRecord): TaskRecord {
+  return { ...t, memo: t.memo ?? '', actionItems: t.actionItems ?? [], docs: t.docs ?? [], categories: t.categories?.length ? t.categories : ['본식 준비'] }
 }
 
 export const ANCHOR_LABEL: Record<AnchorKey, string> = {

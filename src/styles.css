@@ -259,6 +259,43 @@ table.compare tbody th { color: var(--ink-3); font-weight: 400; white-space: now
 .dayline li.main { font-family: var(--serif); color: var(--rose-deep); }
 .dayline .time { width: 64px; flex: none; font-variant-numeric: tabular-nums; color: var(--gold); }
 
+/* 분류·보기·업무 페이지 */
+.tag.cat { border-color: var(--gold-soft); background: var(--gold-soft); color: #6f5627; }
+.filter-row { display: flex; gap: 0; flex-wrap: nowrap; overflow-x: auto; padding-bottom: 4px; scrollbar-width: thin; }
+.filter-row .chip { flex: none; }
+.view-tabs .chip { font-family: var(--serif); }
+.task-page { display: flex; flex-direction: column; gap: 12px; padding-top: 10px; border-top: 1px dashed var(--line-strong); }
+.doc-link { color: var(--rose-deep); text-decoration: none; word-break: break-all; }
+button.ghost.danger { color: var(--rose-deep); align-self: flex-start; }
+
+/* 상태별 보드 */
+.board { display: grid; grid-template-columns: repeat(3, minmax(240px, 1fr)); gap: 10px; overflow-x: auto; padding-bottom: 6px; scroll-snap-type: x mandatory; }
+.board-col { display: flex; flex-direction: column; gap: 8px; padding: 12px; border-radius: 16px; background: var(--blush); border: 1px solid var(--line); scroll-snap-align: start; min-width: 0; }
+.board-col .count { font-size: 12px; min-width: 22px; text-align: center; border-radius: 999px; background: var(--card); padding: 1px 6px; color: var(--ink-2); }
+.board-card { display: flex; flex-direction: column; gap: 6px; padding: 10px 12px; border-radius: 12px; background: var(--card); border: 1px solid var(--line); }
+.board-card .task-meta { margin-top: 0; }
+
+/* 간트 */
+.gantt-wrap { display: flex; flex-direction: column; gap: 8px; padding: 10px; }
+.gantt-scroll { overflow-x: auto; }
+.gantt { position: relative; }
+.gantt-axis { position: relative; height: 20px; border-bottom: 1px solid var(--line); }
+.gantt-tick { position: absolute; top: 2px; transform: translateX(-50%); font-size: 11px; color: var(--ink-3); white-space: nowrap; font-variant-numeric: tabular-nums; }
+.gantt-group { position: sticky; left: 0; display: inline-block; margin: 10px 0 2px; font-family: var(--serif); font-size: 13px; color: var(--gold); background: var(--card); padding-right: 6px; }
+.gantt-row { display: flex; align-items: center; height: 26px; }
+.gantt-name { position: sticky; left: 0; z-index: 2; flex: none; width: 120px; padding-right: 6px; font-size: 12px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; background: var(--card); }
+.gantt-lane { position: relative; height: 100%; flex: none; }
+.gantt-grid { position: absolute; top: 0; bottom: 0; width: 1px; background: var(--line); }
+.gantt-today { position: absolute; top: 0; bottom: 0; width: 2px; background: var(--gold); }
+.gantt-wedding { position: absolute; top: 0; bottom: 0; width: 2px; background: var(--rose); }
+.gantt-bar { position: absolute; top: 7px; height: 12px; border-radius: 6px; background: var(--gold-soft); border: 1px solid var(--gold); }
+.gantt-bar.doing { background: #f0d3a0; }
+.gantt-bar.done { background: var(--rose); border-color: var(--rose); }
+.gantt-bar.late { box-shadow: 0 0 0 2px var(--rose-soft); border-color: var(--rose-deep); }
+.gantt-key { display: inline-block; width: 18px; height: 8px; border-radius: 4px; background: var(--gold-soft); border: 1px solid var(--gold); vertical-align: 0; }
+.gantt-key.doing { background: #f0d3a0; }
+.gantt-key.done { background: var(--rose); border-color: var(--rose); }
+
 /* 아래쪽 탭(04 이후) */
 .app.has-hub .page { padding-bottom: 84px; }
 .hub {
