@@ -3,6 +3,7 @@ import { useNavigate } from 'react-router-dom'
 import { BRAND } from '../brand'
 import { Layout } from '../components/Layout'
 import { FloralArch } from '../components/Ornaments'
+import { celebrateFrom } from '../effects/petals'
 import { useNextPath } from '../components/flow'
 import { QuestionFields } from '../components/FieldInput'
 import { QUESTIONS, summarize } from '../data/questions'
@@ -80,8 +81,9 @@ export default function ChatChecklist01() {
             {next && (
               <button
                 className="primary"
-                onClick={() => {
+                onClick={(e) => {
                   finishChecklist()
+                  celebrateFrom(e.currentTarget)
                   navigate(next)
                 }}
               >

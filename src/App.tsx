@@ -1,4 +1,5 @@
 import { HashRouter, Navigate, Route, Routes } from 'react-router-dom'
+import { PetalSky } from './effects/PetalSky'
 import Index00 from './pages/00_index'
 import ChatChecklist01 from './pages/01_chat_checklist'
 import CardChecklist01 from './pages/01_card_checklist'
@@ -11,6 +12,7 @@ import CardMap03 from './pages/03_card_map'
 export default function App() {
   return (
     <HashRouter>
+      <PetalSky />
       <Routes>
         <Route path="/" element={<Index00 />} />
         <Route path="/01_chat_checklist" element={<ChatChecklist01 />} />

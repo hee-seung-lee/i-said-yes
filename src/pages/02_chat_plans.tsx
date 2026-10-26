@@ -3,6 +3,7 @@ import { useNavigate } from 'react-router-dom'
 import { Layout } from '../components/Layout'
 import { NeedAnswers, useAnswersReady, useNextPath } from '../components/flow'
 import { DuplicateNotice, PlanCard } from '../components/PlanCard'
+import { celebrate } from '../effects/petals'
 import { buildPlans, hasDuplicatePlans, recommendedKey } from '../logic/recommend'
 import { QUESTIONS, summarize } from '../data/questions'
 import { useStore } from '../store'
@@ -42,7 +43,11 @@ export default function ChatPlans02() {
         </div>
         {hasDuplicatePlans(plans) && <DuplicateNotice />}
         {plans.map((p) => (
-          <PlanCard key={p.key} plan={p} recommended={p.key === rec} selected={p.key === selectedPlan} onSelect={() => selectPlan(p.key)} />
+          <PlanCard key={p.key} plan={p} recommended={p.key === rec} selected={p.key === selectedPlan} onSelect={() => {
+              selectPlan(p.key)
+              celebrate()
+            }}
+          />
         ))}
         {chosen && (
           <>

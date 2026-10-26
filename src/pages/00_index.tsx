@@ -3,6 +3,7 @@ import { BRAND } from '../brand'
 import { Layout } from '../components/Layout'
 import { FloralArch, FloralDivider } from '../components/Ornaments'
 import { useFirstPath } from '../components/flow'
+import { celebrateFrom } from '../effects/petals'
 import { PIECES, STAGE_LABEL, TYPE_LABEL } from '../pieces'
 import { type PieceType, type Stage, useStore } from '../store'
 
@@ -30,7 +31,13 @@ export default function Index00() {
         <p className="tagline">{BRAND.tagline}</p>
         <p className="sub">{BRAND.promise}</p>
         <div className="row" style={{ marginTop: 8 }}>
-          <button className="primary" onClick={() => navigate(first)}>
+          <button
+            className="primary"
+            onClick={(e) => {
+              celebrateFrom(e.currentTarget)
+              navigate(first)
+            }}
+          >
             준비 시작하기
           </button>
         </div>

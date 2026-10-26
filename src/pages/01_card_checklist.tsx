@@ -4,6 +4,7 @@ import { Layout } from '../components/Layout'
 import { useNextPath } from '../components/flow'
 import { QuestionFields } from '../components/FieldInput'
 import { useSwipe } from '../components/useSwipe'
+import { celebrate } from '../effects/petals'
 import { QUESTIONS, summarize } from '../data/questions'
 import { useStore } from '../store'
 
@@ -26,6 +27,7 @@ export default function CardChecklist01() {
     setProgress(index + 1)
     if (last) {
       finishChecklist()
+      celebrate()
       if (next) navigate(next)
     } else setIndex(index + 1)
   }

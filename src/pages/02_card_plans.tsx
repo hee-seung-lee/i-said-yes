@@ -4,6 +4,7 @@ import { Layout } from '../components/Layout'
 import { NeedAnswers, useAnswersReady, useNextPath } from '../components/flow'
 import { DuplicateNotice, PlanCard } from '../components/PlanCard'
 import { useSwipe } from '../components/useSwipe'
+import { celebrateFrom } from '../effects/petals'
 import { buildPlans, hasDuplicatePlans, recommendedKey } from '../logic/recommend'
 import { useStore } from '../store'
 
@@ -49,8 +50,9 @@ export default function CardPlans02() {
       <div className="row" style={{ marginTop: 'auto' }}>
         <button
           className="primary grow"
-          onClick={() => {
+          onClick={(e) => {
             selectPlan(plan.key)
+            celebrateFrom(e.currentTarget)
             if (next) navigate(next)
           }}
         >
