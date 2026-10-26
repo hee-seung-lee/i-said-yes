@@ -330,7 +330,9 @@ button.ghost.danger { color: var(--rose-deep); align-self: flex-start; }
 }
 .hub a { display: flex; flex-direction: column; align-items: center; gap: 2px; padding: 8px 0 10px; font-size: 12px; color: var(--ink-3); text-decoration: none; }
 .hub a.on { color: var(--rose); }
-.hub-icon { font-size: 16px; line-height: 1.2; }
+/* 선화 아이콘: 평소 금색 선, 고른 탭은 로즈 선 + 옅은 로즈 채움 */
+.hub-svg { width: 24px; height: 24px; fill: none; stroke: var(--gold); stroke-width: 1.6; stroke-linecap: round; stroke-linejoin: round; transition: stroke 0.15s, fill 0.15s; }
+.hub a.on .hub-svg { stroke: var(--rose); fill: var(--rose-soft); }
 
 /* 첫 화면 */
 .hero { position: relative; display: flex; flex-direction: column; align-items: center; text-align: center; gap: 10px; padding: 28px 8px 12px; }

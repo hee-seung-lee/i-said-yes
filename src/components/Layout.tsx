@@ -3,6 +3,7 @@ import { Link, NavLink } from 'react-router-dom'
 import { BRAND } from '../brand'
 import { HUB, pathFor } from '../pieces'
 import { useStore } from '../store'
+import { HubIcon } from './HubIcons'
 import { RingsMark, Sprig } from './Ornaments'
 
 interface Props {
@@ -39,9 +40,7 @@ export function Layout({ piece, wide, hub, children }: Props) {
         <nav className="hub" aria-label="결혼 준비 메뉴">
           {HUB.map((h) => (
             <NavLink key={h.stage} to={`/${pathFor(h.stage, flow[h.stage])}`} className={({ isActive }) => (isActive ? 'on' : '')}>
-              <span className="hub-icon" aria-hidden="true">
-                {h.icon}
-              </span>
+              <HubIcon name={h.icon} />
               {h.label}
             </NavLink>
           ))}
