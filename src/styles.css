@@ -18,7 +18,8 @@
   background: var(--bg);
 }
 @media (prefers-color-scheme: dark) {
-  :root {
+  :root:not([data-theme='light']) {
+    color-scheme: dark;
     --bg: #1b1a18;
     --surface: #26241f;
     --surface-2: #302d28;
@@ -33,6 +34,23 @@
     --ok: #97c459;
     --warn: #ef9f27;
   }
+}
+/* 게시 환경이 테마를 명시하면(data-theme) OS 설정보다 우선한다 */
+:root[data-theme='dark'] {
+  color-scheme: dark;
+  --bg: #1b1a18;
+  --surface: #26241f;
+  --surface-2: #302d28;
+  --text: #f1efe8;
+  --text-2: #b4b2a9;
+  --muted: #888780;
+  --border: rgba(255, 255, 255, 0.12);
+  --border-strong: rgba(255, 255, 255, 0.28);
+  --accent: #ed93b1;
+  --accent-bg: #4b1528;
+  --accent-text: #f4c0d1;
+  --ok: #97c459;
+  --warn: #ef9f27;
 }
 * { box-sizing: border-box; }
 body { margin: 0; background: var(--bg); }
