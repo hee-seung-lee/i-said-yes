@@ -4,6 +4,7 @@
 // sourceUrl 은 조원 개인 Notion 이라 비워 둔다(가져오기 때 들어오면 중복 판정에 쓴다).
 
 import type { Attachment } from '../logic/files'
+import type { Place } from '../logic/geo'
 
 export type TaskStatus = '시작 전' | '진행 중' | '완료'
 export type AnchorKey = 'wedding' | 'familyMeeting' | 'shoot' | 'moveIn' | 'departure'
@@ -55,6 +56,7 @@ export interface TaskRecord {
   memo: string
   actionItems: ActionItem[]
   docs: DocLink[]
+  location?: Place | null // 이 일과 관련된 장소(상견례 장소, 임장한 집, 촬영지 등)
 }
 
 // 노션 '분류' 다중 선택의 10가지(노션 순서)
@@ -167,6 +169,7 @@ function base(id: string, category: string, title: string, start: number, due: n
     memo: '',
     actionItems: [],
     docs: [],
+    location: null,
   }
 }
 
@@ -232,7 +235,7 @@ export function newUserTask(input: NewTaskInput, existing: TaskRecord[]): TaskRe
 
 // 예전 저장본·가져온 데이터에 새 필드가 없으면 채운다
 export function withDefaults(t: TaskRecord): TaskRecord {
-  return { ...t, memo: t.memo ?? '', actionItems: t.actionItems ?? [], docs: t.docs ?? [], categories: t.categories?.length ? t.categories : ['본식 준비'] }
+  return { ...t, memo: t.memo ?? '', actionItems: t.actionItems ?? [], docs: t.docs ?? [], location: t.location ?? null, categories: t.categories?.length ? t.categories : ['본식 준비'] }
 }
 
 export const ANCHOR_LABEL: Record<AnchorKey, string> = {

@@ -21,7 +21,7 @@ export interface MergePreview {
 
 const COMPARED: (keyof TaskRecord)[] = [
   'title', 'status', 'budget', 'startDaysBefore', 'dueDaysBefore', 'ownerIds', 'requiredForWedding',
-  'completionCriteria', 'memo', 'actionItems', 'docs', 'categories', 'fixedStart', 'fixedDue', 'completedAt', 'decisionStatus', 'adopted', 'excluded', 'dependencies', 'override',
+  'completionCriteria', 'memo', 'actionItems', 'docs', 'location', 'categories', 'fixedStart', 'fixedDue', 'completedAt', 'decisionStatus', 'adopted', 'excluded', 'dependencies', 'override',
 ]
 
 function looksLikeTask(x: unknown): x is TaskRecord {

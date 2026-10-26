@@ -5,6 +5,7 @@ import { ANCHOR_LABEL, type AnchorKey, CATEGORIES, type Owner, type TaskRecord, 
 import { celebrateFrom } from '../effects/petals'
 import { removeFile } from '../logic/files'
 import { Attachments } from './Attachments'
+import { DistanceChips, LocationPicker } from './Places'
 import { needsPurchase } from '../logic/decide'
 import { fmt, newId, toMan, toWon } from '../logic/money'
 import { buildPlans, recommendedKey } from '../logic/recommend'
@@ -92,6 +93,7 @@ export function Tags({ item }: { item: TodoItem }) {
       )}
       {t.docs.length > 0 && <span className="tag">📎 {t.docs.length}</span>}
       {t.memo.trim() && <span className="tag">메모</span>}
+      {t.location && <span className="tag">📍 {t.location.label}</span>}
     </>
   )
 }
@@ -338,6 +340,7 @@ function TaskPage({ task }: { task: TaskRecord }) {
 
   return (
     <div className="task-page">
+      <TaskPlace task={task} />
       <label className="field">
         <span className="field-label">프로젝트 정보</span>
         <textarea
@@ -377,6 +380,30 @@ function TaskPage({ task }: { task: TaskRecord }) {
         <span className="field-label">문서·사진</span>
         <Attachments idPrefix={`doc-${task.id}`} items={task.docs} onChange={(f) => updateTask(task.id, { docs: f(latest().docs) })} />
       </div>
+    </div>
+  )
+}
+
+// 이 일의 장소. 넣으면 우리 장소까지 거리를 보여 주고 '장소' 탭 지도에도 모인다.
+function TaskPlace({ task }: { task: TaskRecord }) {
+  const updateTask = useStore((s) => s.updateTask)
+  const mine = useStore((s) => s.project.places)
+  return (
+    <div className="field">
+      <span className="field-label">장소</span>
+      {task.location ? (
+        <>
+          <div className="dep-row">
+            <span className="grow">📍 {task.location.label}</span>
+            <button className="ghost" aria-label="장소 지우기" onClick={() => updateTask(task.id, { location: null })}>
+              ✕
+            </button>
+          </div>
+          <DistanceChips at={task.location} mine={mine} />
+        </>
+      ) : (
+        <LocationPicker id={`tloc-${task.id}`} value={null} onChange={(p) => updateTask(task.id, { location: p })} mine={mine} placeholder="장소 이름이나 동 이름" />
+      )}
     </div>
   )
 }

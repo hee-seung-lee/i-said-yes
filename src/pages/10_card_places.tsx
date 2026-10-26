@@ -30,7 +30,10 @@ export default function CardPlaces10() {
       color: contracts[q.taskId]?.quoteId === q.id ? '#8e4553' : '#b3955a',
     }))
   const planPts: MapPoint[] = (plan?.picks ?? []).map((v) => ({ id: `plan-${v.id}`, label: v.name, group: `${plan!.letter}안 ${categoryLabel(v.category)}`, lat: v.lat, lng: v.lng, color: CATEGORY_COLOR[v.category] }))
-  const all = [...quotePts, ...planPts]
+  const taskPts: MapPoint[] = tasks
+    .filter((t) => t.location && t.adopted && !t.excluded)
+    .map((t) => ({ id: `task-${t.id}`, label: t.location!.label, group: t.title, lat: t.location!.lat, lng: t.location!.lng, color: '#6f8f74' }))
+  const all = [...taskPts, ...quotePts, ...planPts]
   const filled = MY_PLACES.filter((m) => places[m.key]).length
 
   return (
@@ -57,9 +60,9 @@ export default function CardPlaces10() {
       <section className="card" style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
         <PlacesMap points={all} mine={places} height={320} />
         <div className="muted">
-          🏠🏢👪 우리 장소 · ● 금색 견적 후보 · ● 진한 로즈 계약한 곳{planPts.length > 0 ? ' · 그 밖의 색은 3안 예시 업체' : ''}
+          🏠🏢👪 우리 장소 · ● 초록 업무 장소 · ● 금색 견적 후보 · ● 진한 로즈 계약한 곳{planPts.length > 0 ? ' · 그 밖의 색은 3안 예시 업체' : ''}
         </div>
-        {all.length === 0 && <div className="sub">견적 비교에서 후보마다 위치를 넣으면 여기에 모여요.</div>}
+        {all.length === 0 && <div className="sub">업무 상세의 '장소'나 견적 후보의 위치를 넣으면 여기에 모여요.</div>}
         <DistanceTable points={all.map((p) => ({ ...p, label: `${p.group} · ${p.label}` }))} mine={places} />
       </section>
     </Layout>
