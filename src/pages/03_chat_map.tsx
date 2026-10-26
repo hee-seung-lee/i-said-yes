@@ -1,0 +1,74 @@
+import { useMemo } from 'react'
+import { Layout } from '../components/Layout'
+import { NeedAnswers, NeedPlan, useAnswersReady } from '../components/flow'
+import { Legend, PlanMap } from '../components/PlanMap'
+import { buildPlans, categoryLabel, distanceKm } from '../logic/recommend'
+import { inquiryDraft, nextActionFor } from '../logic/nextActions'
+import { useStore } from '../store'
+
+export default function ChatMap03() {
+  const answers = useStore((s) => s.answers)
+  const selectedPlan = useStore((s) => s.selectedPlan)
+  const ready = useAnswersReady()
+  const plan = useMemo(() => buildPlans(answers).find((p) => p.key === selectedPlan), [answers, selectedPlan])
+
+  if (!ready)
+    return (
+      <Layout piece="03_chat_map">
+        <NeedAnswers />
+      </Layout>
+    )
+  if (!plan)
+    return (
+      <Layout piece="03_chat_map">
+        <NeedPlan />
+      </Layout>
+    )
+
+  const local = plan.picks.filter((v) => v.category !== 'snap')
+  const snap = plan.picks.find((v) => v.category === 'snap')
+  const base = local[0]
+  const unknownExtras = plan.picks.filter((v) => !v.extrasConfirmed)
+
+  return (
+    <Layout piece="03_chat_map">
+      <div className="chat">
+        <p className="bot-tag">준비 도우미</p>
+        <div className="bubble">{plan.letter}안 업체 위치예요.</div>
+        <PlanMap vendors={local} />
+        <Legend vendors={local} />
+        {base && local.length > 1 && (
+          <div className="bubble">
+            {local
+              .slice(1)
+              .map((v) => `${categoryLabel(base.category)} → ${categoryLabel(v.category)} 직선 약 ${distanceKm(base, v).toFixed(1)}km`)
+              .join(', ')}
+            예요. 실제 이동 시간은 길찾기로 확인해 주세요.
+          </div>
+        )}
+        {snap && <div className="bubble">별도 촬영({snap.name})은 예식 지역과 떨어져 있어 지도에서 뺐어요.</div>}
+        <div className="bubble">
+          다음에 할 일이에요.
+          <ul style={{ margin: '6px 0 0', paddingLeft: 18 }}>
+            {plan.picks.map((v) => {
+              const a = nextActionFor(v)
+              return (
+                <li key={v.id}>
+                  {a.task} <span className="muted">({a.when})</span>
+                </li>
+              )
+            })}
+          </ul>
+        </div>
+        {unknownExtras.length > 0 && (
+          <>
+            <div className="bubble">추가금이 확인 안 된 곳이 있어요. 이렇게 물어보시면 돼요.</div>
+            <pre className="bubble me" style={{ whiteSpace: 'pre-wrap', fontFamily: 'inherit', margin: 0 }}>
+              {inquiryDraft(unknownExtras[0])}
+            </pre>
+          </>
+        )}
+      </div>
+    </Layout>
+  )
+}
