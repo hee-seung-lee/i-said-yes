@@ -1,61 +1,176 @@
-// 조각(페이지) 사이를 잇는 공유 상태. 어떤 타입 조합으로 이어 붙여도 같은 답변·선택을 본다.
+// 조각(페이지) 사이를 잇는 공유 상태. localStorage 에 스키마 버전을 붙여 저장한다(PRD).
 import { create } from 'zustand'
 import { persist } from 'zustand/middleware'
 import type { Answers } from './data/questions'
-import type { TaskStatus } from './data/tasks'
+import { type AnchorKey, type TaskRecord, type TaskStatus, seedTasks } from './data/tasks'
 import type { PlanKey } from './logic/recommend'
-import { type Anchors, EMPTY_ANCHORS } from './logic/schedule'
+import type { Contract, Payment, Quote } from './logic/money'
+import { type Anchors, EMPTY_ANCHORS, todaySeoul } from './logic/schedule'
 
-export type Stage = '01' | '02' | '03' | '04'
+export type Stage = '01' | '02' | '03' | '04' | '05' | '06' | '07' | '08' | '09'
 export type PieceType = 'chat' | 'card'
+
+export interface Project {
+  anchors: Anchors
+  totalBudget: number | null // 원. null = 미정
+  reserveBudget: number | null
+  budgetScope: { house: boolean | null; goods: boolean | null; trip: boolean | null } // 총예산에 신혼집·혼수·여행 포함 여부
+}
+
+export interface DayOf {
+  ceremonyTime: string | null // 'HH:MM'
+  checked: Record<string, boolean>
+  vendorCheck: Record<string, boolean> // 계약 업체 최종 확인
+}
 
 interface State {
   answers: Answers
-  progress: number // 체크리스트에서 지나간 문항 수(대화형·카드형 공유)
-  checklistDone: boolean // 끝까지 넘겼는지. 모든 문항이 선택 입력이라 답 개수로 판단하지 않는다.
+  progress: number
+  checklistDone: boolean
   selectedPlan: PlanKey | null
-  anchors: Anchors // 본식일과 별도 기준일
-  taskStatus: Record<string, TaskStatus>
-  flow: Record<Stage, PieceType> // 단계별로 어느 타입 조각을 이어 붙일지
+  flow: Record<Stage, PieceType>
+  tasks: TaskRecord[]
+  project: Project
+  quotes: Quote[]
+  chosen: Record<string, string> // taskId → 고른 견적 id
+  contracts: Record<string, Contract>
+  dayof: DayOf
+
   setAnswer: (key: string, values: string[]) => void
   setProgress: (n: number) => void
   finishChecklist: () => void
   selectPlan: (key: PlanKey) => void
-  setAnchor: (key: keyof Anchors, value: string | null) => void
-  setTaskStatus: (id: string, status: TaskStatus) => void
   setFlow: (stage: Stage, type: PieceType) => void
   reset: () => void
+
+  setAnchor: (key: AnchorKey, value: string | null) => void
+  setProject: (patch: Partial<Omit<Project, 'anchors'>>) => void
+  updateTask: (id: string, patch: Partial<TaskRecord>) => void
+  setStatus: (id: string, status: TaskStatus) => void
+  replaceTasks: (tasks: TaskRecord[]) => void
+
+  upsertQuote: (q: Quote) => void
+  removeQuote: (id: string) => void
+  choose: (taskId: string, quoteId: string | null) => void
+  setContract: (taskId: string, c: Contract | null) => void
+  addPayment: (taskId: string, p: Payment) => void
+  removePayment: (taskId: string, paymentId: string) => void
+
+  setDayOf: (patch: Partial<DayOf>) => void
+  importAll: (data: Partial<PersistedShape>) => void
 }
 
-// 2: 체크리스트 20문항(필드 단위 키)으로 바뀜. 1 의 답은 버린다.
-// 3: 일정(anchors·taskStatus)과 04 단계 추가. 2 의 답은 그대로 둔다.
-export const SCHEMA_VERSION = 3
+export type PersistedShape = Pick<State, 'answers' | 'progress' | 'checklistDone' | 'selectedPlan' | 'flow' | 'tasks' | 'project' | 'quotes' | 'chosen' | 'contracts' | 'dayof'>
 
-const fresh = { answers: {}, progress: 0, checklistDone: false, selectedPlan: null, anchors: EMPTY_ANCHORS, taskStatus: {} }
-const defaultFlow: Record<Stage, PieceType> = { '01': 'card', '02': 'card', '03': 'card', '04': 'card' }
+// 2: 체크리스트 20문항으로 바뀜(1 의 답은 버린다)
+// 3: 일정(anchors·taskStatus) 추가
+// 4: PRD 업무 모델(tasks·project·quotes·contracts·dayof). 3 의 상태·기준일은 옮긴다
+export const SCHEMA_VERSION = 4
+
+const defaultFlow: Record<Stage, PieceType> = { '01': 'card', '02': 'card', '03': 'card', '04': 'card', '05': 'card', '06': 'card', '07': 'card', '08': 'card', '09': 'card' }
+const freshProject = (): Project => ({ anchors: { ...EMPTY_ANCHORS }, totalBudget: null, reserveBudget: null, budgetScope: { house: null, goods: null, trip: null } })
+const freshDayOf = (): DayOf => ({ ceremonyTime: null, checked: {}, vendorCheck: {} })
+const fresh = () => ({
+  answers: {},
+  progress: 0,
+  checklistDone: false,
+  selectedPlan: null,
+  tasks: seedTasks(),
+  project: freshProject(),
+  quotes: [],
+  chosen: {},
+  contracts: {},
+  dayof: freshDayOf(),
+})
+
+const mapTask = (tasks: TaskRecord[], id: string, f: (t: TaskRecord) => TaskRecord) => tasks.map((t) => (t.id === id ? f(t) : t))
 
 export const useStore = create<State>()(
   persist(
     (set) => ({
-      ...fresh,
+      ...fresh(),
       flow: defaultFlow,
       setAnswer: (key, values) => set((s) => ({ answers: { ...s.answers, [key]: values }, selectedPlan: null })),
       setProgress: (n) => set((s) => ({ progress: Math.max(s.progress, n) })),
       finishChecklist: () => set({ checklistDone: true }),
       selectPlan: (key) => set({ selectedPlan: key }),
-      setAnchor: (key, value) => set((s) => ({ anchors: { ...s.anchors, [key]: value } })),
-      setTaskStatus: (id, status) => set((s) => ({ taskStatus: { ...s.taskStatus, [id]: status } })),
       setFlow: (stage, type) => set((s) => ({ flow: { ...s.flow, [stage]: type } })),
-      reset: () => set(fresh),
+      reset: () => set(fresh()),
+
+      setAnchor: (key, value) => set((s) => ({ project: { ...s.project, anchors: { ...s.project.anchors, [key]: value } } })),
+      setProject: (patch) => set((s) => ({ project: { ...s.project, ...patch } })),
+      updateTask: (id, patch) => set((s) => ({ tasks: mapTask(s.tasks, id, (t) => ({ ...t, ...patch })) })),
+      // 완료 시각은 완료로 바꿀 때 남기고, 되돌리면 지운다
+      setStatus: (id, status) =>
+        set((s) => ({ tasks: mapTask(s.tasks, id, (t) => ({ ...t, status, completedAt: status === '완료' ? (t.completedAt ?? todaySeoul()) : null })) })),
+      replaceTasks: (tasks) => set({ tasks }),
+
+      upsertQuote: (q) => set((s) => ({ quotes: s.quotes.some((x) => x.id === q.id) ? s.quotes.map((x) => (x.id === q.id ? q : x)) : [...s.quotes, q] })),
+      removeQuote: (id) =>
+        set((s) => {
+          const chosen = Object.fromEntries(Object.entries(s.chosen).filter(([, qid]) => qid !== id))
+          return { quotes: s.quotes.filter((q) => q.id !== id), chosen }
+        }),
+      choose: (taskId, quoteId) =>
+        set((s) => {
+          const chosen = { ...s.chosen }
+          if (quoteId) chosen[taskId] = quoteId
+          else delete chosen[taskId]
+          return { chosen }
+        }),
+      setContract: (taskId, c) =>
+        set((s) => {
+          const contracts = { ...s.contracts }
+          if (c) contracts[taskId] = c
+          else delete contracts[taskId]
+          return { contracts }
+        }),
+      addPayment: (taskId, p) =>
+        set((s) => {
+          const c = s.contracts[taskId]
+          return c ? { contracts: { ...s.contracts, [taskId]: { ...c, payments: [...c.payments, p] } } } : {}
+        }),
+      removePayment: (taskId, paymentId) =>
+        set((s) => {
+          const c = s.contracts[taskId]
+          return c ? { contracts: { ...s.contracts, [taskId]: { ...c, payments: c.payments.filter((p) => p.id !== paymentId) } } } : {}
+        }),
+
+      setDayOf: (patch) => set((s) => ({ dayof: { ...s.dayof, ...patch } })),
+      importAll: (data) => set((s) => ({ ...s, ...data })),
     }),
     {
       name: 'i-said-yes',
       version: SCHEMA_VERSION,
       migrate: (persisted, version) => {
-        const s = persisted as Partial<State>
-        if (version < 2) return { ...s, ...fresh, flow: defaultFlow } as State
-        return { ...s, anchors: s.anchors ?? EMPTY_ANCHORS, taskStatus: s.taskStatus ?? {}, flow: { ...defaultFlow, ...s.flow } } as State
+        const s = persisted as Record<string, unknown>
+        if (version < 2) return { ...fresh(), flow: defaultFlow } as unknown as State
+        const out: Record<string, unknown> = { ...fresh(), ...s, flow: { ...defaultFlow, ...(s.flow as object) } }
+        if (version < 4) {
+          // 3 의 taskStatus·anchors 를 새 모델로 옮긴다
+          const old = (s.anchors ?? {}) as Record<string, string | null>
+          const statuses = (s.taskStatus ?? {}) as Record<string, TaskStatus>
+          out.tasks = seedTasks().map((t) => (statuses[t.id] ? { ...t, status: statuses[t.id] } : t))
+          out.project = {
+            ...freshProject(),
+            anchors: {
+              wedding: old.weddingDate ?? null,
+              familyMeeting: old.familyMeetingDate ?? null,
+              shoot: old.shootDate ?? null,
+              moveIn: old.moveInDate ?? null,
+              departure: old.departureDate ?? null,
+            },
+          }
+          delete out.anchors
+          delete out.taskStatus
+        }
+        return out as unknown as State
       },
     },
   ),
 )
+
+export function persistedShape(s: State): PersistedShape {
+  const { answers, progress, checklistDone, selectedPlan, flow, tasks, project, quotes, chosen, contracts, dayof } = s
+  return { answers, progress, checklistDone, selectedPlan, flow, tasks, project, quotes, chosen, contracts, dayof }
+}

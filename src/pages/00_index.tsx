@@ -4,10 +4,11 @@ import { Layout } from '../components/Layout'
 import { FloralArch, FloralDivider } from '../components/Ornaments'
 import { useFirstPath } from '../components/flow'
 import { celebrateFrom } from '../effects/petals'
-import { PIECES, STAGE_LABEL, TYPE_LABEL } from '../pieces'
+import { PIECES, STAGE_LABEL, TYPE_LABEL, pathFor } from '../pieces'
 import { type PieceType, type Stage, useStore } from '../store'
 
 const STAGES: Stage[] = ['01', '02', '03', '04']
+const PRD_STAGES: Stage[] = ['05', '06', '07', '08', '09']
 const TYPES: PieceType[] = ['chat', 'card']
 
 // 조각 목록 + 조립기. 단계마다 타입을 골라 이어 붙인 흐름을 바로 돌려 본다.
@@ -100,6 +101,28 @@ export default function Index00() {
           </div>
         </section>
       ))}
+
+      <div className="section-title">
+        <span className="num">PRD</span>
+        <h3>결혼 준비 도구</h3>
+      </div>
+      <p className="sub" style={{ margin: 0 }}>
+        PRD 화면이에요. 04 부터는 아래쪽 탭으로 오가요.
+      </p>
+      <div className="grid-pieces">
+        {PRD_STAGES.map((st) => {
+          const p = PIECES.find((x) => x.path === pathFor(st, 'card'))!
+          return (
+            <Link key={p.path} to={`/${p.path}`} className="card piece-card">
+              <div className="mono" style={{ color: 'var(--gold)' }}>
+                {p.path}
+              </div>
+              <div style={{ fontFamily: 'var(--serif)', fontWeight: 700, margin: '6px 0 4px' }}>{p.title}</div>
+              <div className="sub">{p.desc}</div>
+            </Link>
+          )
+        })}
+      </div>
     </Layout>
   )
 }

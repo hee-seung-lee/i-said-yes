@@ -1,32 +1,22 @@
 import { useState } from 'react'
 import { Layout } from '../components/Layout'
-import { NeedAnswers, useAnswersReady } from '../components/flow'
-import { AnchorInputs, Readiness, TaskRow, TodayCard, useTodos } from '../components/Timeline'
+import { AnchorInputs, LateStartPanel, Readiness, TaskRow, TodayCard, useTodos } from '../components/Timeline'
 import { PHASES } from '../data/tasks'
 import { daysBetween, formatKDate } from '../logic/schedule'
 import { phaseLabel } from '../logic/todo'
 
 export default function ChatTimeline04() {
-  const ready = useAnswersReady()
   const { plan, items, picks, ready: rd, today, anchors } = useTodos()
-  const [dateAnswered, setDateAnswered] = useState(() => anchors.weddingDate !== null)
+  const [dateAnswered, setDateAnswered] = useState(() => anchors.wedding !== null)
   const [showAll, setShowAll] = useState(false)
 
-  if (!ready)
-    return (
-      <Layout piece="04_chat_timeline">
-        <NeedAnswers />
-      </Layout>
-    )
-
-  // 지금 단계 다음 묶음에서 남은 일 미리보기
   const currentIdx = PHASES.findIndex((p) => p.id === (picks[0]?.item.phase ?? 'p1'))
   const nextPhase = PHASES[currentIdx + 1]
-  const upcoming = nextPhase ? items.filter((i) => i.phase === nextPhase.id && i.status !== '완료' && !i.optional).slice(0, 4) : []
-  const d = anchors.weddingDate ? daysBetween(today, anchors.weddingDate) : null
+  const upcoming = nextPhase ? items.filter((i) => i.phase === nextPhase.id && i.task.status !== '완료' && !i.task.excluded).slice(0, 4) : []
+  const d = anchors.wedding ? daysBetween(today, anchors.wedding) : null
 
   return (
-    <Layout piece="04_chat_timeline">
+    <Layout piece="04_chat_timeline" hub>
       <div className="chat">
         <p className="bot-tag">준비 도우미</p>
         <div className="bubble">
@@ -34,10 +24,10 @@ export default function ChatTimeline04() {
         </div>
         {!dateAnswered ? (
           <div className="qform">
-            <AnchorInputs only={['weddingDate']} />
+            <AnchorInputs only={['wedding']} />
             <div className="row" style={{ justifyContent: 'flex-end', marginTop: 12 }}>
               <button onClick={() => setDateAnswered(true)}>아직 미정이에요</button>
-              <button className="primary" disabled={!anchors.weddingDate} onClick={() => setDateAnswered(true)}>
+              <button className="primary" disabled={!anchors.wedding} onClick={() => setDateAnswered(true)}>
                 이 날짜로 할게요
               </button>
             </div>
@@ -45,13 +35,14 @@ export default function ChatTimeline04() {
         ) : (
           <>
             <div className="bubble me" onClick={() => setDateAnswered(false)} style={{ cursor: 'pointer' }} title="눌러서 고치기">
-              {anchors.weddingDate ? `${formatKDate(anchors.weddingDate)}에 해요` : '아직 미정이에요'}
+              {anchors.wedding ? `${formatKDate(anchors.wedding)}에 해요` : '아직 미정이에요'}
             </div>
             <div className="bubble">
               {d !== null
                 ? `본식까지 ${d}일 남았어요. 지금 시기에 맞춰 오늘 할 일 3가지를 골랐어요.`
-                : '날짜가 없으니 먼저 해야 하는 단계부터 3가지를 골랐어요. 날짜가 정해지면 알려 주세요.'}
+                : '날짜가 없으니 진행 중인 일과 먼저 해야 하는 단계부터 3가지를 골랐어요.'}
             </div>
+            <LateStartPanel />
             <Readiness {...rd} />
             {picks.map((p, i) => (
               <TodayCard key={p.item.task.id} pick={p} index={i} />
@@ -62,7 +53,7 @@ export default function ChatTimeline04() {
                 그다음 <b style={{ fontFamily: 'var(--serif)' }}>{phaseLabel(nextPhase!.id)}</b>에는 이런 일이 기다려요.
                 <ul style={{ margin: '6px 0 0', paddingLeft: 18 }}>
                   {upcoming.map((i) => (
-                    <li key={i.task.id}>{i.title}</li>
+                    <li key={i.task.id}>{i.task.title}</li>
                   ))}
                 </ul>
               </div>
@@ -77,7 +68,7 @@ export default function ChatTimeline04() {
                     <h3 style={{ fontSize: 15 }}>{p.label}</h3>
                   </div>
                   {items
-                    .filter((i) => i.phase === p.id)
+                    .filter((i) => i.phase === p.id && !i.task.excluded)
                     .map((i) => (
                       <TaskRow key={i.task.id} item={i} />
                     ))}

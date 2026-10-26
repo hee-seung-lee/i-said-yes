@@ -1,85 +1,202 @@
-// 결혼 준비 56개 업무와 본식(D-0) 기준 상대 일정. 출처: 조 PRD(wedding-agent-flow.md) 표.
-// 원본 Notion 의 날짜·상태·링크는 개인 자료라 넣지 않는다. 모두 "시작 전"으로 시작한다.
-export type TaskStatus = '시작 전' | '진행 중' | '완료'
+// PRD 의 업무 모델과 초기 데이터(56개 원본 업무 + 제안 마일스톤 5개).
+// 출처: docs/wedding-agent-flow.md "초기 데이터"·"원본 56개 업무의 상대 일정"·"데이터 모델 확장".
+// 원본 Notion 의 날짜(originalStartDate/EndDate)는 일정 계산에 쓰지 않으므로 넣지 않는다.
+// sourceUrl 은 조원 개인 Notion 이라 비워 둔다(가져오기 때 들어오면 중복 판정에 쓴다).
 
-export interface Task {
-  id: string
-  title: string
-  category: string
-  startDaysBefore: number // 착수 권장(본식 며칠 전)
-  dueDaysBefore: number // 완료 목표(본식 며칠 전)
-  forWedding: boolean // 본식 필수 준비율에 들어가는지. 신혼집·신혼여행은 별개로 본다
+export type TaskStatus = '시작 전' | '진행 중' | '완료'
+export type AnchorKey = 'wedding' | 'familyMeeting' | 'shoot' | 'moveIn' | 'departure'
+export type DecisionStatus = '미결정' | '비교 중' | '보류' | '선택함' | '계약 확인'
+export type Owner = '신랑' | '신부' | '둘이' | '가족'
+
+export interface Dependency {
+  taskId: string // 먼저 끝나야 하는 일
+  type: 'hard' | 'soft' // hard 만 실행을 막는다
+  confirmed: boolean // 사용자가 확인해야 활성화
 }
 
-const t = (id: string, category: string, title: string, start: number, due: number): Task => ({
-  id,
-  title,
-  category,
-  startDaysBefore: start,
-  dueDaysBefore: due,
-  forWedding: category !== '신혼집' && category !== '신혼여행',
-})
+export interface TaskRecord {
+  id: string
+  title: string
+  categories: string[]
+  status: TaskStatus
+  budget: number | null // 업무 예산(원). null 과 0 을 구분한다
+  sourceUrl: string | null
+  origin: 'source' | 'proposed' | 'user'
+  adopted: boolean // 제안 마일스톤은 채택해야 보인다. 원본·사용자 업무는 늘 true
+  anchor: 'wedding' // 기본 기준은 본식
+  startDaysBefore: number
+  dueDaysBefore: number
+  // 별도 기준일 override(PRD: 적용 기준과 그 기준의 일수를 업무에 저장). 그 기준일이 들어오면 이 값으로 계산한다
+  override: { anchor: AnchorKey; startDaysBefore: number; dueDaysBefore: number } | null
+  scheduleOrigin: 'proposed' | 'user'
+  ownerIds: Owner[]
+  requiredForWedding: boolean
+  completionCriteria: string
+  dependencies: Dependency[]
+  fixedStart: string | null // 확정 예약 날짜. 기준일이 바뀌어도 유지
+  fixedDue: string | null
+  completedAt: string | null
+  decisionStatus: DecisionStatus
+  holdReason: string | null // 보류 시 막힌 기준 1개
+  nextReviewDate: string | null
+  excluded: boolean // 압축 계획에서 '제외'한 일
+}
 
-export const TASKS: Task[] = [
-  t('T01', '상견례', '날짜 잡기', 330, 300),
-  t('T02', '상견례', '장소 잡기', 330, 300),
-  t('T03', '상견례', '양가 선물 정하기', 300, 280),
-  t('T04', '웨딩 스케치', '날짜 후보 정하기', 365, 330),
-  t('T05', '웨딩 스케치', '예산 대략 정하기', 365, 330),
-  t('T06', '웨딩 스케치', '웨딩 전용 카드 발급', 330, 300),
-  t('T07', '홀 계약', '예식장 날짜 전달 및 예산 받기', 330, 300),
-  t('T08', '스드메 계약', '촬영 날짜 확정', 270, 240),
-  t('T09', '스드메 계약', '드레스 계약', 210, 180),
-  t('T10', '스드메 계약', '예복 계약', 210, 180),
-  t('T11', '스드메 계약', '혼주 메이크업 예약', 180, 150),
-  t('T12', '스드메 계약', '본식 헤어/메이크업 예약', 240, 180),
-  t('T13', '스드메 계약', '웨딩링 계약', 240, 180),
-  t('T14', '신혼집', '신혼집 방향 결정', 240, 180),
-  t('T15', '신혼여행', '후보지 비교', 240, 210),
-  t('T16', '본식 준비', '본식 스냅 예약', 240, 180),
-  t('T17', '본식 준비', '본식 DVD 예약', 240, 180),
-  t('T18', '본식 준비', '아이폰 스냅 예약', 180, 150),
-  t('T19', '본식 준비', '뷔페 예약', 180, 150),
-  t('T20', '본식 준비', '꽃장식 예약', 180, 150),
-  t('T21', '본식 준비', '헬퍼 예약', 120, 90),
-  t('T22', '스튜디오 촬영', '스냅 시안 및 소품 준비', 150, 130),
-  t('T23', '드레스&예복', '드레스샵 투어', 240, 210),
-  t('T24', '드레스&예복', '예복 투어', 240, 210),
-  t('T25', '신혼집', '신혼집 임장하기', 180, 120),
-  t('T26', '신혼집', '혼수 리스트 작성', 120, 90),
-  t('T27', '신혼여행', '여행계획', 210, 180),
-  t('T28', '신혼여행', '항공편 예약', 210, 180),
-  t('T29', '신혼여행', '숙소 예약', 180, 150),
-  t('T30', '청첩장 제작', '청첩장 회의 및 제작', 100, 80),
-  t('T31', '청첩장 제작', '청모 인원 짜보기', 100, 80),
-  t('T32', '청첩장 제작', '청모 진행', 75, 21),
-  t('T33', '신혼집', '혼수 구매', 60, 21),
-  t('T34', '드레스&예복', '드레스 가봉', 42, 21),
-  t('T35', '드레스&예복', '예복 가봉', 56, 28),
-  t('T36', '본식 준비', '가방순이 섭외', 56, 32),
-  t('T37', '본식 준비', '축의대 섭외', 56, 32),
-  t('T38', '본식 준비', '반주자 섭외', 56, 32),
-  t('T39', '신혼집', '신혼집 계약 및 이사준비', 120, 60),
-  t('T40', '스드메 계약', '혼주 한복 맞추기', 100, 60),
-  t('T41', '스드메 계약', '혼주 예복 구입', 100, 60),
-  t('T42', '본식 준비', '부케 준비', 56, 21),
-  t('T43', '본식 준비', '답례품 준비', 56, 21),
-  t('T44', '본식 준비', '하객 리스트 작성 (최종 인원 확인)', 56, 14),
-  t('T45', '본식 준비', '식순 준비', 56, 21),
-  t('T46', '본식 준비', 'BGM 준비 (입장곡, 퇴장곡)', 32, 14),
-  t('T47', '본식 준비', '모바일 청첩장 제작', 75, 56),
-  t('T48', '본식 준비', '성혼선언문·혼인서약서', 32, 14),
-  t('T49', '본식 준비', '포토테이블 상의', 42, 21),
-  t('T50', '본식 준비', '식전영상 회의 및 제작', 56, 21),
-  t('T51', '본식 준비', '식권 준비', 21, 7),
-  t('T52', '본식 준비', '축의대 준비물 챙기기', 14, 3),
-  t('T53', '본식 준비', '헬퍼비 정산봉투 준비', 7, 1),
-  t('T54', '본식 준비', '주례비 정산봉투 준비', 7, 1),
-  t('T55', '본식 준비', '혼주 한복 체크', 21, 7),
-  t('T56', '본식 준비', '신랑 예복 체크', 21, 7),
+type Row = [id: string, category: string, title: string, start: number, due: number]
+
+// PRD 표 그대로(제목 원문 유지)
+const ROWS: Row[] = [
+  ['T01', '상견례', '날짜 잡기', 330, 300],
+  ['T02', '상견례', '장소 잡기', 330, 300],
+  ['T03', '상견례', '양가 선물 정하기', 300, 280],
+  ['T04', '웨딩 스케치', '날짜 후보 정하기', 365, 330],
+  ['T05', '웨딩 스케치', '예산 대략 정하기', 365, 330],
+  ['T06', '웨딩 스케치', '웨딩 전용 카드 발급', 330, 300],
+  ['T07', '홀 계약', '예식장 날짜 전달 및 예산 받기', 330, 300],
+  ['T08', '스드메 계약', '촬영 날짜 확정', 270, 240],
+  ['T09', '스드메 계약', '드레스 계약', 210, 180],
+  ['T10', '스드메 계약', '예복 계약', 210, 180],
+  ['T11', '스드메 계약', '혼주 메이크업 예약', 180, 150],
+  ['T12', '스드메 계약', '본식 헤어/메이크업 예약', 240, 180],
+  ['T13', '스드메 계약', '웨딩링 계약', 240, 180],
+  ['T14', '신혼집', '신혼집 방향 결정', 240, 180],
+  ['T15', '신혼여행', '후보지 비교', 240, 210],
+  ['T16', '본식 준비', '본식 스냅 예약', 240, 180],
+  ['T17', '본식 준비', '본식 dvd 예약', 240, 180],
+  ['T18', '본식 준비', '아이폰 스냅 예약', 180, 150],
+  ['T19', '본식 준비', '뷔페 예약', 180, 150],
+  ['T20', '본식 준비', '꽃장식 예약', 180, 150],
+  ['T21', '본식 준비', '헬퍼 예약', 120, 90],
+  ['T22', '스튜디오 촬영', '스냅 시안 및 소품 준비', 150, 130],
+  ['T23', '드레스&예복', '드레스샵 투어', 240, 210],
+  ['T24', '드레스&예복', '예복 투어', 240, 210],
+  ['T25', '신혼집', '신혼집 임장하기', 180, 120],
+  ['T26', '신혼집', '혼수 리스트 작성', 120, 90],
+  ['T27', '신혼여행', '여행계획', 210, 180],
+  ['T28', '신혼여행', '항공편 예약', 210, 180],
+  ['T29', '신혼여행', '숙소 예약', 180, 150],
+  ['T30', '청첩장 제작', '회의 및 제작', 100, 80],
+  ['T31', '청첩장 제작', '청모 인원 짜보기', 100, 80],
+  ['T32', '청첩장 제작', '청모 진행', 75, 21],
+  ['T33', '신혼집', '혼수 구매', 60, 21],
+  ['T34', '드레스&예복', '드레스 가봉', 42, 21],
+  ['T35', '드레스&예복', '예복 가봉', 56, 28],
+  ['T36', '본식 준비', '가방순이 섭외', 56, 32],
+  ['T37', '본식 준비', '축의대 섭외', 56, 32],
+  ['T38', '본식 준비', '반주자 섭외', 56, 32],
+  ['T39', '신혼집', '신혼집 계약 및 이사준비', 120, 60],
+  ['T40', '스드메 계약', '혼주 한복 맞추기', 100, 60],
+  ['T41', '스드메 계약', '혼주 예복 구입', 100, 60],
+  ['T42', '본식 준비', '부케 준비', 56, 21],
+  ['T43', '본식 준비', '답례품 준비', 56, 21],
+  ['T44', '본식 준비', '하객 리스트 작성 (최종 인원 확인)', 56, 14],
+  ['T45', '본식 준비', '식순 준비', 56, 21],
+  ['T46', '본식 준비', 'BGM 준비 (입장곡, 퇴장곡)', 32, 14],
+  ['T47', '본식 준비', '모바일 청첩장 제작', 75, 56],
+  ['T48', '본식 준비', '성혼선언문? 혼인서약서?', 32, 14],
+  ['T49', '본식 준비', '포토테이블 상의', 42, 21],
+  ['T50', '본식 준비', '식전영상 회의 및 제작', 56, 21],
+  ['T51', '본식 준비', '식권 준비', 21, 7],
+  ['T52', '본식 준비', '축의대 준비물 챙기기', 14, 3],
+  ['T53', '본식 준비', '헬퍼비 정산봉투 준비', 7, 1],
+  ['T54', '본식 준비', '주례비 정산봉투 준비', 7, 1],
+  ['T55', '본식 준비', '혼주 한복 체크', 21, 7],
+  ['T56', '본식 준비', '신랑 예복 체크', 21, 7],
 ]
 
-// 일정 묶음. 상대 일정(마감 기준)으로 나눈다.
+// PRD 초기 데이터의 상태·예산(수용 기준: 시작 전 52 / 진행 중 3 / 완료 1, 예산 입력 1개 950,000원)
+const SEED_STATUS: Record<string, TaskStatus> = { T04: '진행 중', T05: '진행 중', T13: '진행 중', T08: '완료' }
+const SEED_BUDGET: Record<string, number> = { T08: 950000 }
+
+// 별도 기준일로 계산하는 업무(PRD "별도 기준일과 순서")
+const ANCHOR_OVERRIDE: Record<string, [AnchorKey, number, number]> = {
+  T03: ['familyMeeting', 21, 7],
+  T22: ['shoot', 30, 7],
+  T33: ['moveIn', 60, 14],
+  T28: ['departure', 210, 180],
+  T29: ['departure', 180, 150],
+}
+
+// 신혼집·여행은 본식 완료를 막지 않는다
+export const NOT_FOR_WEDDING = ['신혼집', '신혼여행']
+
+function base(id: string, category: string, title: string, start: number, due: number): TaskRecord {
+  return {
+    id,
+    title,
+    categories: [category],
+    status: SEED_STATUS[id] ?? '시작 전',
+    budget: SEED_BUDGET[id] ?? null,
+    sourceUrl: null,
+    origin: 'source',
+    adopted: true,
+    anchor: 'wedding',
+    override: null,
+    startDaysBefore: start,
+    dueDaysBefore: due,
+    scheduleOrigin: 'proposed',
+    ownerIds: [],
+    requiredForWedding: !NOT_FOR_WEDDING.includes(category),
+    completionCriteria: '',
+    dependencies: [],
+    fixedStart: null,
+    fixedDue: null,
+    completedAt: null,
+    decisionStatus: '미결정',
+    holdReason: null,
+    nextReviewDate: null,
+    excluded: false,
+  }
+}
+
+// 원본에 없는 제안 마일스톤(origin=proposed). 사용자가 채택해야 보인다.
+const MILESTONES: Row[] = [
+  ['M01', '스튜디오 촬영', '실제 촬영', 150, 120],
+  ['M02', '스튜디오 촬영', '보정본 수령', 120, 90],
+  ['M03', '본식 준비', '최종 업체 확인', 14, 7],
+  ['M04', '본식 준비', '당일 진행표 만들기', 14, 3],
+  ['M05', '본식', '본식', 0, 0],
+]
+
+// 원본에 없지만 PRD 가 권하는 선행 관계. 모두 미확인(confirmed=false)으로 시작한다.
+//  - 예약 확정은 본식 날짜·장소 확인(T07)이 먼저
+//  - 사진 포함 제작물(포토테이블)만 보정본 수령(M02)에 의존. 청첩장은 사진 없이도 만들 수 있어 넣지 않는다
+//  - 의상은 투어 → 계약 → 가봉
+//  - 촬영 날짜 확정(T08)은 실제 촬영(M01)의 선행일 뿐, 완료를 자동으로 넘기지 않는다
+const SUGGESTED: [task: string, prereq: string][] = [
+  ['T08', 'T07'], ['T09', 'T07'], ['T10', 'T07'], ['T11', 'T07'], ['T12', 'T07'],
+  ['T16', 'T07'], ['T17', 'T07'], ['T18', 'T07'], ['T19', 'T07'], ['T20', 'T07'], ['T21', 'T07'],
+  ['T09', 'T23'], ['T10', 'T24'], ['T34', 'T09'], ['T35', 'T10'],
+  ['M01', 'T08'], ['M02', 'M01'], ['T49', 'M02'],
+  ['T51', 'T44'],
+]
+
+export function seedTasks(): TaskRecord[] {
+  const tasks = ROWS.map(([id, c, title, s, d]) => base(id, c, title, s, d))
+  for (const m of MILESTONES) {
+    const r = base(...m)
+    r.origin = 'proposed'
+    r.adopted = false
+    r.status = '시작 전'
+    tasks.push(r)
+  }
+  for (const t of tasks) {
+    const o = ANCHOR_OVERRIDE[t.id]
+    if (o) t.override = { anchor: o[0], startDaysBefore: o[1], dueDaysBefore: o[2] }
+    t.dependencies = SUGGESTED.filter(([id]) => id === t.id).map(([, prereq]) => ({ taskId: prereq, type: 'hard', confirmed: false }))
+  }
+  return tasks
+}
+
+export const ANCHOR_LABEL: Record<AnchorKey, string> = {
+  wedding: '본식',
+  familyMeeting: '상견례',
+  shoot: '촬영',
+  moveIn: '입주',
+  departure: '출국',
+}
+
+// 일정 묶음(마감 기준)
 export const PHASES = [
   { id: 'p1', label: '1년~10개월 전', min: 280 },
   { id: 'p2', label: '9~6개월 전', min: 180 },
