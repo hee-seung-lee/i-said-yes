@@ -1,4 +1,5 @@
 import { Link, useNavigate } from 'react-router-dom'
+import { BRAND } from '../brand'
 import { Layout } from '../components/Layout'
 import { useFirstPath } from '../components/flow'
 import { PIECES, STAGE_LABEL, TYPE_LABEL } from '../pieces'
@@ -17,6 +18,13 @@ export default function Index00() {
 
   return (
     <Layout wide>
+      <section className="hero">
+        <span className="badge">{BRAND.team}</span>
+        <h1>{BRAND.name}</h1>
+        <p className="tagline">{BRAND.tagline}</p>
+        <p className="sub">{BRAND.promise}</p>
+      </section>
+
       <section className="card" style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
         <b style={{ fontWeight: 600 }}>조립해서 돌려 보기</b>
         {STAGES.map((st) => (

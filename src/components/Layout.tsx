@@ -1,5 +1,6 @@
 import type { ReactNode } from 'react'
 import { Link } from 'react-router-dom'
+import { BRAND } from '../brand'
 
 interface Props {
   piece?: string // 단계_타입_기능
@@ -11,7 +12,7 @@ export function Layout({ piece, wide, children }: Props) {
   return (
     <div className={wide ? 'app wide' : 'app'}>
       <header className="top">
-        <span className="name">식장까지 업고 튀어</span>
+        <span className="name">{BRAND.name}</span>
         {piece && <span className="piece">{piece}</span>}
         <span className="spacer" />
         <Link to="/">조각 목록</Link>
