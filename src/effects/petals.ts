@@ -182,9 +182,16 @@ export class PetalEngine {
     this.resize()
     this.populate()
 
+    // 휴대폰은 스크롤로 주소창이 접히고 펴질 때마다 높이만 바뀌는 resize 가 연달아 온다.
+    // 그때마다 캔버스를 새로 만들고 꽃잎을 다시 뿌리면 화면 전체가 번쩍인다.
+    // 폭이 바뀔 때(회전·창 크기 조절)만 다시 뿌리고, 높이는 커질 때만 캔버스를 늘린다.
     const onResize = () => {
-      this.resize()
-      this.populate()
+      if (window.innerWidth !== this.w) {
+        this.resize()
+        this.populate()
+      } else if (window.innerHeight > this.h) {
+        this.resize()
+      } else return
       if (this.reduced) this.draw()
     }
     const onMove = (e: PointerEvent) => this.onPointer(e.clientX, e.clientY)
@@ -210,10 +217,12 @@ export class PetalEngine {
     this.cleanup.forEach((f) => f())
   }
 
+  // 폭이 같으면 높이는 줄이지 않는다(주소창이 다시 펴져도 캔버스를 다시 만들지 않게)
   private resize() {
     this.dpr = Math.min(window.devicePixelRatio || 1, 2)
+    const sameWidth = window.innerWidth === this.w
     this.w = window.innerWidth
-    this.h = window.innerHeight
+    this.h = sameWidth ? Math.max(this.h, window.innerHeight) : window.innerHeight
     for (const c of [this.backCanvas, this.frontCanvas]) {
       c.width = Math.round(this.w * this.dpr)
       c.height = Math.round(this.h * this.dpr)
