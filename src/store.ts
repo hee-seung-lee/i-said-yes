@@ -39,7 +39,7 @@ export const useStore = create<State>()(
       reset: () => set(fresh),
     }),
     {
-      name: 'wedding-agent',
+      name: 'aisle-carry',
       version: SCHEMA_VERSION,
       migrate: (persisted, version) => {
         const s = persisted as Partial<State>
