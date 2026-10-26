@@ -23,6 +23,7 @@ export const STAGE_LABEL: Record<Stage, string> = {
   '07': '예산',
   '08': '본식 체크',
   '09': '데이터',
+  '10': '우리 장소·지도',
 }
 
 export const TYPE_LABEL: Record<PieceType, string> = {
@@ -43,6 +44,7 @@ export const PIECES: Piece[] = [
   { path: '06_card_decide', stage: '06', type: 'card', feature: 'decide', title: '결정 도우미', desc: '추천 1개·대안·이유, 보류와 재검토, 계약 확인' },
   { path: '07_card_budget', stage: '07', type: 'card', feature: 'budget', title: '예산', desc: '예상 비용·지급·잔금, 총예산 범위와 예비비' },
   { path: '08_card_dayof', stage: '08', type: 'card', feature: 'dayof', title: '본식 체크', desc: '마지막 주 할 일, 업체 최종 확인, 준비물, 당일 진행표' },
+  { path: '10_card_places', stage: '10', type: 'card', feature: 'places', title: '우리 장소·지도', desc: '신부·신랑 집·회사, 양가 본가와 모든 업체 위치·거리 비교' },
   { path: '09_card_data', stage: '09', type: 'card', feature: 'data', title: '데이터', desc: 'JSON 내보내기·가져오기(중복 방지·병합 미리보기)' },
 ]
 
@@ -66,5 +68,6 @@ export const HUB: { stage: Stage; label: string; icon: string }[] = [
   { stage: '06', label: '결정', icon: '♡' },
   { stage: '07', label: '예산', icon: '◔' },
   { stage: '08', label: '본식', icon: '💍' },
+  { stage: '10', label: '장소', icon: '📍' },
   { stage: '09', label: '데이터', icon: '⇅' },
 ]

@@ -3,6 +3,8 @@
 // 원본 Notion 의 날짜(originalStartDate/EndDate)는 일정 계산에 쓰지 않으므로 넣지 않는다.
 // sourceUrl 은 조원 개인 Notion 이라 비워 둔다(가져오기 때 들어오면 중복 판정에 쓴다).
 
+import type { Attachment } from '../logic/files'
+
 export type TaskStatus = '시작 전' | '진행 중' | '완료'
 export type AnchorKey = 'wedding' | 'familyMeeting' | 'shoot' | 'moveIn' | 'departure'
 export type DecisionStatus = '미결정' | '비교 중' | '보류' | '선택함' | '계약 확인'
@@ -14,11 +16,8 @@ export interface ActionItem {
   done: boolean
 }
 
-export interface DocLink {
-  id: string
-  label: string
-  url: string
-}
+// 문서·사진 첨부(링크 또는 이 브라우저에 저장한 파일)
+export type DocLink = Attachment
 
 export interface Dependency {
   taskId: string // 먼저 끝나야 하는 일

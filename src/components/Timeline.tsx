@@ -3,6 +3,8 @@ import { useMemo, useState } from 'react'
 import { Link } from 'react-router-dom'
 import { ANCHOR_LABEL, type AnchorKey, CATEGORIES, type Owner, type TaskRecord, type TaskStatus } from '../data/tasks'
 import { celebrateFrom } from '../effects/petals'
+import { removeFile } from '../logic/files'
+import { Attachments } from './Attachments'
 import { needsPurchase } from '../logic/decide'
 import { fmt, newId, toMan, toWon } from '../logic/money'
 import { buildPlans, recommendedKey } from '../logic/recommend'
@@ -325,23 +327,12 @@ function TitleEditor({ task }: { task: TaskRecord }) {
 function TaskPage({ task }: { task: TaskRecord }) {
   const updateTask = useStore((s) => s.updateTask)
   const [todo, setTodo] = useState('')
-  const [label, setLabel] = useState('')
-  const [url, setUrl] = useState('')
-  const [err, setErr] = useState('')
   // 최신 업무로 고친다(연달아 눌러도 앞 변경을 잃지 않게)
   const latest = () => useStore.getState().tasks.find((x) => x.id === task.id)!
   const addTodo = () => {
     if (!todo.trim()) return
     updateTask(task.id, { actionItems: [...latest().actionItems, { id: newId('a'), text: todo.trim(), done: false }] })
     setTodo('')
-  }
-  const addDoc = () => {
-    const u = url.trim()
-    if (!/^https?:\/\/\S+$/i.test(u)) return setErr('http:// 또는 https:// 로 시작하는 주소를 넣어 주세요')
-    updateTask(task.id, { docs: [...latest().docs, { id: newId('d'), label: label.trim() || hostOf(u), url: u }] })
-    setLabel('')
-    setUrl('')
-    setErr('')
   }
   const done = task.actionItems.filter((a) => a.done).length
 
@@ -383,25 +374,8 @@ function TaskPage({ task }: { task: TaskRecord }) {
       </div>
 
       <div className="field">
-        <span className="field-label">문서</span>
-        {task.docs.map((d) => (
-          <div key={d.id} className="dep-row">
-            <a className="grow doc-link" href={d.url} target="_blank" rel="noopener noreferrer">
-              📎 {d.label}
-            </a>
-            <span className="muted">{hostOf(d.url)}</span>
-            <button className="ghost" aria-label="문서 지우기" onClick={() => updateTask(task.id, { docs: latest().docs.filter((x) => x.id !== d.id) })}>
-              ✕
-            </button>
-          </div>
-        ))}
-        <div className="row" style={{ flexWrap: 'wrap' }}>
-          <input id={`doc-label-${task.id}`} value={label} placeholder="이름 (견적서, 계약서)" onChange={(e) => setLabel(e.target.value)} style={{ flex: '1 1 120px' }} />
-          <input id={`doc-url-${task.id}`} value={url} placeholder="https:// 드라이브·PDF 링크" onChange={(e) => setUrl(e.target.value)} style={{ flex: '2 1 180px' }} />
-          <button onClick={addDoc}>첨부</button>
-        </div>
-        {err && <span className="err">{err}</span>}
-        <span className="muted">파일은 구글 드라이브 등에 올리고 링크를 붙여 주세요. 앱은 파일을 따로 저장하지 않아요.</span>
+        <span className="field-label">문서·사진</span>
+        <Attachments idPrefix={`doc-${task.id}`} items={task.docs} onChange={(f) => updateTask(task.id, { docs: f(latest().docs) })} />
       </div>
     </div>
   )
@@ -424,20 +398,20 @@ function DeleteTask({ task }: { task: TaskRecord }) {
       </span>
       <div className="row">
         <button onClick={() => setAsk(false)}>취소</button>
-        <button className="primary" onClick={() => deleteTask(task.id)}>
+        <button
+          className="primary"
+          onClick={() => {
+            // 브라우저에 저장한 이 업무의 사진·파일(업무 문서와 견적 증빙)도 지운다
+            const quotes = useStore.getState().quotes.filter((q) => q.taskId === task.id)
+            for (const a of [...task.docs, ...quotes.flatMap((q) => q.files ?? [])]) if (a.fileId) removeFile(a.fileId)
+            deleteTask(task.id)
+          }}
+        >
           삭제
         </button>
       </div>
     </div>
   )
-}
-
-function hostOf(u: string): string {
-  try {
-    return new URL(u).hostname.replace(/^www\./, '')
-  } catch {
-    return u
-  }
 }
 
 export function TodayCard({ pick, index }: { pick: Pick; index: number }) {

@@ -8,7 +8,7 @@ import { PIECES, STAGE_LABEL, TYPE_LABEL, pathFor } from '../pieces'
 import { type PieceType, type Stage, useStore } from '../store'
 
 const STAGES: Stage[] = ['01', '02', '03', '04']
-const PRD_STAGES: Stage[] = ['05', '06', '07', '08', '09']
+const PRD_STAGES: Stage[] = ['05', '06', '07', '08', '10', '09']
 const TYPES: PieceType[] = ['chat', 'card']
 
 // 조각 목록 + 조립기. 단계마다 타입을 골라 이어 붙인 흐름을 바로 돌려 본다.

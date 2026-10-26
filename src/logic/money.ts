@@ -1,3 +1,6 @@
+import type { Attachment } from './files'
+import type { Place } from './geo'
+
 // 견적·계약·예산 계산. 금액은 원 단위 정수(PRD: 원화). 화면 입력은 만 원으로 받아 바꾼다.
 // PRD 비용 규칙: null(모름)과 0 을 구분, 추가금 미확인이면 확정 총액 대신 확인된 최소금액,
 // 업무 예상비용은 계약액 > 고른 견적 > 업무 예산 중 하나만, 지급액은 비용에 더하지 않는다.
@@ -14,6 +17,8 @@ export interface Quote {
   evidence: string // 근거(견적서 사진 위치, 상담 메모 등)
   checkedAt: string | null // 확인일
   sample?: boolean // 예시 업체에서 가져온 값
+  files?: Attachment[] // 견적서·상담 사진 등 증빙
+  location?: Place // 업체 위치(대략)
 }
 
 export interface Payment {

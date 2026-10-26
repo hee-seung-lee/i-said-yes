@@ -54,7 +54,7 @@ export default function CardData09() {
     <Layout piece="09_card_data" hub>
       <section className="card" style={{ display: 'flex', flexDirection: 'column', gap: 10, padding: 18 }}>
         <h3 style={{ margin: 0 }}>내보내기</h3>
-        <div className="sub">이 브라우저에 저장된 모든 준비 내용이에요. 다른 기기나 조원에게 옮길 때 복사해서 쓰세요.</div>
+        <div className="sub">이 브라우저에 저장된 모든 준비 내용이에요. 다른 기기나 조원에게 옮길 때 복사해서 쓰세요. 올린 사진·파일 원본은 들어가지 않아요(목록만 옮겨지고, 다른 기기에서는 '파일 없음'으로 보여요).</div>
         <textarea id="export-json" readOnly value={exported} rows={6} onFocus={(e) => e.currentTarget.select()} />
         <CopyButton text={exported} label="JSON 복사" />
       </section>

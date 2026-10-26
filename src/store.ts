@@ -6,8 +6,9 @@ import { type AnchorKey, type TaskRecord, type TaskStatus, seedTasks, withDefaul
 import type { PlanKey } from './logic/recommend'
 import type { Contract, Payment, Quote } from './logic/money'
 import { type Anchors, EMPTY_ANCHORS, todaySeoul } from './logic/schedule'
+import { EMPTY_PLACES, type MyPlaceKey, type MyPlaces, type Place } from './logic/geo'
 
-export type Stage = '01' | '02' | '03' | '04' | '05' | '06' | '07' | '08' | '09'
+export type Stage = '01' | '02' | '03' | '04' | '05' | '06' | '07' | '08' | '09' | '10'
 export type PieceType = 'chat' | 'card'
 
 export interface Project {
@@ -15,6 +16,7 @@ export interface Project {
   totalBudget: number | null // 원. null = 미정
   reserveBudget: number | null
   budgetScope: { house: boolean | null; goods: boolean | null; trip: boolean | null } // 총예산에 신혼집·혼수·여행 포함 여부
+  places: MyPlaces // 우리 장소(신부·신랑 집·회사, 양가 본가) 대략 위치
 }
 
 export interface DayOf {
@@ -45,6 +47,7 @@ interface State {
 
   setAnchor: (key: AnchorKey, value: string | null) => void
   setProject: (patch: Partial<Omit<Project, 'anchors'>>) => void
+  setPlace: (key: MyPlaceKey, place: Place | null) => void
   updateTask: (id: string, patch: Partial<TaskRecord>) => void
   setStatus: (id: string, status: TaskStatus) => void
   replaceTasks: (tasks: TaskRecord[]) => void
@@ -68,10 +71,11 @@ export type PersistedShape = Pick<State, 'answers' | 'progress' | 'checklistDone
 // 3: 일정(anchors·taskStatus) 추가
 // 4: PRD 업무 모델(tasks·project·quotes·contracts·dayof). 3 의 상태·기준일은 옮긴다
 // 5: 업무 메모·액션 아이템·문서 링크, 사용자 업무 추가·삭제. 4 의 업무에 빈 값을 채운다
-export const SCHEMA_VERSION = 5
+// 6: 우리 장소(project.places), 견적 위치·증빙 파일
+export const SCHEMA_VERSION = 6
 
-const defaultFlow: Record<Stage, PieceType> = { '01': 'card', '02': 'card', '03': 'card', '04': 'card', '05': 'card', '06': 'card', '07': 'card', '08': 'card', '09': 'card' }
-const freshProject = (): Project => ({ anchors: { ...EMPTY_ANCHORS }, totalBudget: null, reserveBudget: null, budgetScope: { house: null, goods: null, trip: null } })
+const defaultFlow: Record<Stage, PieceType> = { '01': 'card', '02': 'card', '03': 'card', '04': 'card', '05': 'card', '06': 'card', '07': 'card', '08': 'card', '09': 'card', '10': 'card' }
+const freshProject = (): Project => ({ anchors: { ...EMPTY_ANCHORS }, totalBudget: null, reserveBudget: null, budgetScope: { house: null, goods: null, trip: null }, places: { ...EMPTY_PLACES } })
 const freshDayOf = (): DayOf => ({ ceremonyTime: null, checked: {}, vendorCheck: {} })
 const fresh = () => ({
   answers: {},
@@ -102,6 +106,7 @@ export const useStore = create<State>()(
 
       setAnchor: (key, value) => set((s) => ({ project: { ...s.project, anchors: { ...s.project.anchors, [key]: value } } })),
       setProject: (patch) => set((s) => ({ project: { ...s.project, ...patch } })),
+      setPlace: (key, place) => set((s) => ({ project: { ...s.project, places: { ...s.project.places, [key]: place } } })),
       updateTask: (id, patch) => set((s) => ({ tasks: mapTask(s.tasks, id, (t) => ({ ...t, ...patch })) })),
       // 완료 시각은 완료로 바꿀 때 남기고, 되돌리면 지운다
       setStatus: (id, status) =>
@@ -185,6 +190,10 @@ export const useStore = create<State>()(
         }
         if (version < 5) {
           out.tasks = (out.tasks as TaskRecord[]).map((t) => withDefaults(t.id === 'M05' ? { ...t, categories: ['본식 준비'] } : t))
+        }
+        if (version < 6) {
+          const p = out.project as Project
+          out.project = { ...p, places: { ...EMPTY_PLACES, ...(p.places ?? {}) } }
         }
         return out as unknown as State
       },

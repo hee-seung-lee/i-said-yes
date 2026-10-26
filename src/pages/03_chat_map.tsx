@@ -1,8 +1,9 @@
 import { useMemo } from 'react'
 import { Layout } from '../components/Layout'
-import { useNavigate } from 'react-router-dom'
+import { Link, useNavigate } from 'react-router-dom'
 import { NeedAnswers, NeedPlan, useAnswersReady, useNextPath } from '../components/flow'
-import { Legend, PlanMap } from '../components/PlanMap'
+import { CATEGORY_COLOR, Legend } from '../components/PlanMap'
+import { DistanceTable, PlacesMap } from '../components/Places'
 import { buildPlans, categoryLabel, distanceKm } from '../logic/recommend'
 import { inquiryDraft, nextActionFor } from '../logic/nextActions'
 import { useStore } from '../store'
@@ -13,6 +14,7 @@ export default function ChatMap03() {
   const ready = useAnswersReady()
   const plan = useMemo(() => buildPlans(answers).find((p) => p.key === selectedPlan), [answers, selectedPlan])
   const next = useNextPath('03')
+  const mine = useStore((s) => s.project.places)
   const navigate = useNavigate()
 
   if (!ready)
@@ -38,7 +40,7 @@ export default function ChatMap03() {
       <div className="chat">
         <p className="bot-tag">준비 도우미</p>
         <div className="bubble">{plan.letter}안 업체 위치예요.</div>
-        <PlanMap vendors={local} />
+        <PlacesMap points={local.map((v) => ({ id: v.id, label: v.name, group: categoryLabel(v.category), lat: v.lat, lng: v.lng, color: CATEGORY_COLOR[v.category] }))} mine={mine} />
         <Legend vendors={local} />
         {base && local.length > 1 && (
           <div className="bubble">
@@ -47,6 +49,16 @@ export default function ChatMap03() {
               .map((v) => `${categoryLabel(base.category)} → ${categoryLabel(v.category)} 직선 약 ${distanceKm(base, v).toFixed(1)}km`)
               .join(', ')}
             예요. 실제 이동 시간은 길찾기로 확인해 주세요.
+          </div>
+        )}
+        {Object.values(mine).some(Boolean) ? (
+          <div className="bubble">
+            우리 장소까지 거리예요.
+            <DistanceTable points={local.map((v) => ({ id: v.id, label: `${categoryLabel(v.category)} · ${v.name.replace(' (예시)', '')}`, lat: v.lat, lng: v.lng, color: CATEGORY_COLOR[v.category] }))} mine={mine} />
+          </div>
+        ) : (
+          <div className="bubble">
+            신부·신랑 집과 회사, 양가 본가를 <Link to="/10_card_places">우리 장소</Link>에 넣어 두면 업체마다 얼마나 먼지 알려 드려요.
           </div>
         )}
         {snap && <div className="bubble">별도 촬영({snap.name})은 예식 지역과 떨어져 있어 지도에서 뺐어요.</div>}

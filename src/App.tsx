@@ -14,6 +14,7 @@ import CardDecide06 from './pages/06_card_decide'
 import CardBudget07 from './pages/07_card_budget'
 import CardDayOf08 from './pages/08_card_dayof'
 import CardData09 from './pages/09_card_data'
+import CardPlaces10 from './pages/10_card_places'
 
 // 경로 = 파일명 = 단계_타입_기능. pieces.ts 목록과 맞춘다.
 export default function App() {
@@ -35,6 +36,7 @@ export default function App() {
         <Route path="/07_card_budget" element={<CardBudget07 />} />
         <Route path="/08_card_dayof" element={<CardDayOf08 />} />
         <Route path="/09_card_data" element={<CardData09 />} />
+        <Route path="/10_card_places" element={<CardPlaces10 />} />
         <Route path="*" element={<Navigate to="/" replace />} />
       </Routes>
     </HashRouter>

@@ -2,6 +2,7 @@
 // 체크리스트 20문항 중 업체 고르기에 쓰는 항목만 읽는다. 나머지는 저장만 하고 이후 기능(일정·견적)에서 쓴다.
 import { type Answers, NONE, OWN_VENUE, UNKNOWN, get, getNumber, labelOf } from '../data/questions'
 import { type Category, type Vendor, VENDORS, CATEGORY_LABEL } from '../data/vendors'
+import { km } from './geo'
 
 export type PlanKey = 'taste' | 'budget' | 'schedule'
 
@@ -192,10 +193,5 @@ export function categoryLabel(c: Category): string {
 
 // 직선거리(km). 실제 이동 시간이 아니다.
 export function distanceKm(a: Vendor, b: Vendor): number {
-  const R = 6371
-  const rad = (d: number) => (d * Math.PI) / 180
-  const dLat = rad(b.lat - a.lat)
-  const dLng = rad(b.lng - a.lng)
-  const h = Math.sin(dLat / 2) ** 2 + Math.cos(rad(a.lat)) * Math.cos(rad(b.lat)) * Math.sin(dLng / 2) ** 2
-  return 2 * R * Math.asin(Math.sqrt(h))
+  return km(a, b)
 }

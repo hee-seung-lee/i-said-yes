@@ -2,7 +2,8 @@ import { useMemo, useState } from 'react'
 import { Layout } from '../components/Layout'
 import { useNavigate } from 'react-router-dom'
 import { NeedAnswers, useAnswersReady, useNextPath } from '../components/flow'
-import { CATEGORY_COLOR, PlanMap } from '../components/PlanMap'
+import { CATEGORY_COLOR } from '../components/PlanMap'
+import { DistanceChips, PlacesMap } from '../components/Places'
 import { buildPlans, categoryLabel, formatManwon, recommendedKey } from '../logic/recommend'
 import { inquiryDraft, nextActionFor } from '../logic/nextActions'
 import { useStore } from '../store'
@@ -14,6 +15,7 @@ export default function CardMap03() {
   const ready = useAnswersReady()
   const plans = useMemo(() => buildPlans(answers), [answers])
   const [copied, setCopied] = useState('')
+  const mine = useStore((s) => s.project.places)
   const next = useNextPath('03')
   const navigate = useNavigate()
 
@@ -39,7 +41,7 @@ export default function CardMap03() {
   return (
     <Layout piece="03_card_map">
       <div style={{ margin: '-20px -20px 0' }}>
-        <PlanMap vendors={local} tall />
+        <PlacesMap points={local.map((v) => ({ id: v.id, label: v.name, group: categoryLabel(v.category), lat: v.lat, lng: v.lng, color: CATEGORY_COLOR[v.category] }))} mine={mine} height={Math.round(window.innerHeight * 0.55)} />
       </div>
       <div className="sheet" style={{ margin: '0 -20px -20px' }}>
         <div className="grip" />
@@ -67,7 +69,7 @@ export default function CardMap03() {
               <div className="sub">
                 다음 할 일: {a.task} <span className="muted">({a.when})</span>
               </div>
-              {v.category === 'snap' && <div className="muted">예식 지역과 떨어져 지도에는 표시하지 않았어요</div>}
+              {v.category === 'snap' ? <div className="muted">예식 지역과 떨어져 지도에는 표시하지 않았어요</div> : <DistanceChips at={v} mine={mine} />}
               {!v.extrasConfirmed && (
                 <button onClick={() => copy(v.id, inquiryDraft(v))}>{copied === v.id ? '문의 초안 복사됨' : '추가금 문의 초안 복사'}</button>
               )}

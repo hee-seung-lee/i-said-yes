@@ -1,7 +1,10 @@
 import { useState } from 'react'
 import { Link } from 'react-router-dom'
 import { Layout } from '../components/Layout'
+import { Attachments } from '../components/Attachments'
 import { CopyButton, ManInput, TaskPicker, usePurchaseTask } from '../components/Money'
+import { DistanceChips, DistanceTable, LocationPicker, type MapPoint, PlacesMap } from '../components/Places'
+import { removeFile } from '../logic/files'
 import { MAX_CANDIDATES } from '../logic/decide'
 import { type Quote, fmt, inquiryText, missingQuestions, newId, quoteTotal } from '../logic/money'
 import { buildPlans, recommendedKey } from '../logic/recommend'
@@ -33,7 +36,13 @@ export default function CardQuotes05() {
   const removeQuote = useStore((s) => s.removeQuote)
   const answers = useStore((s) => s.answers)
   const selectedPlan = useStore((s) => s.selectedPlan)
+  const mine = useStore((s) => s.project.places)
   const [editing, setEditing] = useState<Quote | null>(null)
+  // 견적 필드 하나만 고칠 때 최신 값을 기준으로(파일을 연달아 올려도 앞 것을 잃지 않게)
+  const patchQuote = (id: string, f: (q: Quote) => Partial<Quote>) => {
+    const q = useStore.getState().quotes.find((x) => x.id === id)
+    if (q) upsertQuote({ ...q, ...f(q) })
+  }
 
   if (!task)
     return (
@@ -42,8 +51,9 @@ export default function CardQuotes05() {
       </Layout>
     )
 
-  const mine = quotes.filter((q) => q.taskId === task.id)
-  const full = mine.length >= MAX_CANDIDATES
+  const mineQuotes = quotes.filter((q) => q.taskId === task.id)
+  const full = mineQuotes.length >= MAX_CANDIDATES
+  const located: MapPoint[] = mineQuotes.filter((q) => q.location).map((q) => ({ id: q.id, label: q.vendorName, lat: q.location!.lat, lng: q.location!.lng, color: chosen[task.id] === q.id ? '#8e4553' : '#b3955a' }))
   const plans = buildPlans(answers)
   const plan = plans.find((p) => p.key === (selectedPlan ?? recommendedKey(plans)))
   const sampleVendor = VENDOR_FOR[task.id] && plan?.picks.find((v) => v.category === VENDOR_FOR[task.id])
@@ -57,7 +67,7 @@ export default function CardQuotes05() {
         </div>
       </section>
 
-      {mine.map((q) => {
+      {mineQuotes.map((q) => {
         const t = quoteTotal(q)
         const qs = missingQuestions(q)
         return (
@@ -84,6 +94,26 @@ export default function CardQuotes05() {
               <dt>확인일</dt>
               <dd>{q.checkedAt ?? '-'}</dd>
             </dl>
+            <div className="field">
+              <span className="field-label">위치</span>
+              {q.location ? (
+                <>
+                  <span className="sub">📍 {q.location.label}</span>
+                  <DistanceChips at={q.location} mine={mine} />
+                </>
+              ) : (
+                <LocationPicker id={`qloc-${q.id}`} value={null} onChange={(p) => patchQuote(q.id, () => ({ location: p ?? undefined }))} mine={mine} />
+              )}
+            </div>
+            <div className="field">
+              <span className="field-label">증빙 (견적서·상담 사진)</span>
+              <Attachments
+                idPrefix={`qf-${q.id}`}
+                items={q.files ?? []}
+                onChange={(f) => patchQuote(q.id, (cur) => ({ files: f(cur.files ?? []) }))}
+                hint="견적서, 상담 메모, 샘플 사진을 찍어 올려 두세요."
+              />
+            </div>
             {qs.length > 0 && (
               <div className="preview-box">
                 <b>업체에 물어볼 것</b>
@@ -96,13 +126,32 @@ export default function CardQuotes05() {
             )}
             <div className="row" style={{ justifyContent: 'flex-end' }}>
               <button onClick={() => setEditing(q)}>고치기</button>
-              <button onClick={() => removeQuote(q.id)}>지우기</button>
+              <button
+                onClick={() => {
+                  for (const a of q.files ?? []) if (a.fileId) removeFile(a.fileId)
+                  removeQuote(q.id)
+                }}
+              >
+                지우기
+              </button>
             </div>
           </section>
         )
       })}
 
-      {mine.length >= 2 && <CompareTable quotes={mine} />}
+      {mineQuotes.length >= 2 && <CompareTable quotes={mineQuotes} />}
+      {located.length > 0 && (
+        <section className="card" style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
+          <b style={{ fontFamily: 'var(--serif)' }}>후보 위치 비교</b>
+          <PlacesMap points={located} mine={mine} />
+          <DistanceTable points={located} mine={mine} />
+          {Object.values(mine).every((v) => !v) && (
+            <Link to="/10_card_places" className="sub">
+              우리 장소(집·회사·본가)를 등록하면 거리를 비교해 드려요 →
+            </Link>
+          )}
+        </section>
+      )}
 
       {editing ? (
         <QuoteForm
@@ -118,7 +167,7 @@ export default function CardQuotes05() {
           <button className="primary" disabled={full} onClick={() => setEditing(empty(task.id))}>
             후보 추가
           </button>
-          {sampleVendor && !mine.some((q) => q.sample) && !full && (
+          {sampleVendor && !mineQuotes.some((q) => q.sample) && !full && (
             <button
               onClick={() =>
                 upsertQuote({
@@ -127,6 +176,7 @@ export default function CardQuotes05() {
                   basePrice: sampleVendor.priceMin * 10000,
                   evidence: '체크리스트 3안의 예시 데이터',
                   sample: true,
+                  location: { label: sampleVendor.name, lat: sampleVendor.lat, lng: sampleVendor.lng },
                 })
               }
             >
@@ -137,7 +187,7 @@ export default function CardQuotes05() {
         </div>
       )}
 
-      {mine.length > 0 && (
+      {mineQuotes.length > 0 && (
         <Link to={`/06_card_decide?task=${task.id}`} className="card piece-card next-link">
           결정 도우미로 →
         </Link>
@@ -220,6 +270,10 @@ function QuoteForm({ quote, onSave, onCancel }: { quote: Quote; onSave: (q: Quot
         <input id="qf-confirmed" type="checkbox" checked={q.extrasConfirmed} onChange={(e) => set({ extrasConfirmed: e.target.checked })} />
         <span>필수 추가금까지 업체에 확인했어요 (없으면 0 을 넣고 체크)</span>
       </label>
+      <div className="field">
+        <span className="field-label">위치</span>
+        <LocationPicker id="qf-loc" value={q.location ?? null} onChange={(p) => set({ location: p ?? undefined })} />
+      </div>
       <label className="field">
         <span className="field-label">근거</span>
         <input id="qf-evidence" value={q.evidence} onChange={(e) => set({ evidence: e.target.value })} placeholder="견적서 사진, 상담 메모 위치" />
