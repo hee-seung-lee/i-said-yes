@@ -1,6 +1,7 @@
 import { useMemo, useState } from 'react'
 import { Layout } from '../components/Layout'
-import { NeedAnswers, useAnswersReady } from '../components/flow'
+import { useNavigate } from 'react-router-dom'
+import { NeedAnswers, useAnswersReady, useNextPath } from '../components/flow'
 import { CATEGORY_COLOR, PlanMap } from '../components/PlanMap'
 import { buildPlans, categoryLabel, formatManwon, recommendedKey } from '../logic/recommend'
 import { inquiryDraft, nextActionFor } from '../logic/nextActions'
@@ -13,6 +14,8 @@ export default function CardMap03() {
   const ready = useAnswersReady()
   const plans = useMemo(() => buildPlans(answers), [answers])
   const [copied, setCopied] = useState('')
+  const next = useNextPath('03')
+  const navigate = useNavigate()
 
   if (!ready)
     return (
@@ -35,10 +38,10 @@ export default function CardMap03() {
 
   return (
     <Layout piece="03_card_map">
-      <div style={{ margin: '-16px -16px 0' }}>
+      <div style={{ margin: '-20px -20px 0' }}>
         <PlanMap vendors={local} tall />
       </div>
-      <div className="sheet" style={{ margin: '0 -16px -16px' }}>
+      <div className="sheet" style={{ margin: '0 -20px -20px' }}>
         <div className="grip" />
         <div className="tabs">
           {plans.map((p) => (
@@ -71,6 +74,11 @@ export default function CardMap03() {
             </div>
           )
         })}
+        {next && (
+          <button className="primary" onClick={() => navigate(next)}>
+            일정·할 일 보기
+          </button>
+        )}
       </div>
     </Layout>
   )

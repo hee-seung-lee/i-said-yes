@@ -7,7 +7,7 @@ import { celebrateFrom } from '../effects/petals'
 import { PIECES, STAGE_LABEL, TYPE_LABEL } from '../pieces'
 import { type PieceType, type Stage, useStore } from '../store'
 
-const STAGES: Stage[] = ['01', '02', '03']
+const STAGES: Stage[] = ['01', '02', '03', '04']
 const TYPES: PieceType[] = ['chat', 'card']
 
 // 조각 목록 + 조립기. 단계마다 타입을 골라 이어 붙인 흐름을 바로 돌려 본다.

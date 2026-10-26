@@ -298,11 +298,12 @@ export class PetalEngine {
   }
 
   // 축하: 한 점에서 꽃잎과 금가루가 부채꼴로 솟았다가 흩날린다.
-  celebrate(x = this.w / 2, y = this.h * 0.6) {
+  // power: 1 = 큰 축하(결정), 0.3 정도 = 할 일 하나 끝냈을 때 작은 팡
+  celebrate(x = this.w / 2, y = this.h * 0.6, power = 1) {
     if (this.reduced) return
-    for (let i = 0; i < 46; i++) {
+    for (let i = 0; i < Math.round(46 * power); i++) {
       const a = rand(-Math.PI * 0.92, -Math.PI * 0.08)
-      const sp = rand(260, 620)
+      const sp = rand(260, 620) * (0.6 + 0.4 * power)
       const p = this.newPetal(false, rand(0.9, 1.7))
       p.x = x
       p.y = y
@@ -313,9 +314,9 @@ export class PetalEngine {
       p.life = rand(3.2, 5)
       this.bursts.push(p)
     }
-    for (let i = 0; i < 70; i++) {
+    for (let i = 0; i < Math.round(70 * power); i++) {
       const a = rand(-Math.PI, 0)
-      const sp = rand(120, 520)
+      const sp = rand(120, 520) * (0.6 + 0.4 * power)
       this.sparks.push({
         x,
         y,
@@ -458,13 +459,13 @@ export function mountPetals(back: HTMLCanvasElement, front: HTMLCanvasElement): 
 }
 
 // 축하 연출. 좌표를 주지 않으면 화면 가운데 아래에서 터진다.
-export function celebrate(x?: number, y?: number) {
-  current?.celebrate(x, y)
+export function celebrate(x?: number, y?: number, power = 1) {
+  current?.celebrate(x, y, power)
 }
 
 // 버튼에서 터뜨릴 때 쓰는 도우미
-export function celebrateFrom(el: Element | null) {
-  if (!el) return celebrate()
+export function celebrateFrom(el: Element | null, power = 1) {
+  if (!el) return celebrate(undefined, undefined, power)
   const r = el.getBoundingClientRect()
-  celebrate(r.left + r.width / 2, r.top + r.height / 2)
+  celebrate(r.left + r.width / 2, r.top + r.height / 2, power)
 }

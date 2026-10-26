@@ -1,6 +1,7 @@
 import { useMemo } from 'react'
 import { Layout } from '../components/Layout'
-import { NeedAnswers, NeedPlan, useAnswersReady } from '../components/flow'
+import { useNavigate } from 'react-router-dom'
+import { NeedAnswers, NeedPlan, useAnswersReady, useNextPath } from '../components/flow'
 import { Legend, PlanMap } from '../components/PlanMap'
 import { buildPlans, categoryLabel, distanceKm } from '../logic/recommend'
 import { inquiryDraft, nextActionFor } from '../logic/nextActions'
@@ -11,6 +12,8 @@ export default function ChatMap03() {
   const selectedPlan = useStore((s) => s.selectedPlan)
   const ready = useAnswersReady()
   const plan = useMemo(() => buildPlans(answers).find((p) => p.key === selectedPlan), [answers, selectedPlan])
+  const next = useNextPath('03')
+  const navigate = useNavigate()
 
   if (!ready)
     return (
@@ -66,6 +69,14 @@ export default function ChatMap03() {
             <pre className="bubble me" style={{ whiteSpace: 'pre-wrap', fontFamily: 'inherit', margin: 0 }}>
               {inquiryDraft(unknownExtras[0])}
             </pre>
+          </>
+        )}
+        {next && (
+          <>
+            <div className="bubble">이제 본식까지 무엇을 언제 해야 하는지 정리해 드릴게요.</div>
+            <button className="primary" onClick={() => navigate(next)}>
+              일정·할 일 보기
+            </button>
           </>
         )}
       </div>
