@@ -1,6 +1,8 @@
 import { useEffect, useRef, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
+import { BRAND } from '../brand'
 import { Layout } from '../components/Layout'
+import { FloralArch } from '../components/Ornaments'
 import { useNextPath } from '../components/flow'
 import { QuestionFields } from '../components/FieldInput'
 import { QUESTIONS, summarize } from '../data/questions'
@@ -26,6 +28,10 @@ export default function ChatChecklist01() {
   return (
     <Layout piece="01_chat_checklist">
       <div className="chat">
+        <div className="intro">
+          <FloralArch width={150} />
+          <span className="eyebrow">{BRAND.en}</span>
+        </div>
         <p className="bot-tag">준비 도우미</p>
         <div className="bubble">
           결혼 준비를 시작하기 전에 {QUESTIONS.length}가지를 여쭤볼게요. 모르는 건 비워 두고 넘어가도 돼요. 답에 맞춰 세 가지 안을 만들어 드려요.

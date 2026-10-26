@@ -6,10 +6,10 @@ import type { Category, Vendor } from '../data/vendors'
 import { categoryLabel } from '../logic/recommend'
 
 export const CATEGORY_COLOR: Record<Category, string> = {
-  hall: '#b2456e',
-  dress: '#534ab7',
-  studio: '#0f6e56',
-  snap: '#ba7517',
+  hall: '#b0606f',
+  dress: '#8a6fa8',
+  studio: '#6f8f74',
+  snap: '#b3955a',
 }
 
 function FitBounds({ vendors }: { vendors: Vendor[] }) {

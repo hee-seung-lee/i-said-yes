@@ -23,6 +23,7 @@ const style = readFileSync(join(dist, css[1]), 'utf8')
 // 게시 환경이 doctype/html/head/body 를 씌우므로 내용만 쓴다.
 const page = [
   '<title>식장까지 업고 튀어</title>',
+  '<meta name="color-scheme" content="only light">',
   `<style>${style}</style>`,
   '<div id="root"></div>',
   `<script type="module">${script}</script>`,

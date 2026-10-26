@@ -43,17 +43,22 @@ export default function CardChecklist01() {
           <span key={x.id} className={i <= index ? 'done' : ''} onClick={() => i <= progress && setIndex(i)} />
         ))}
       </div>
-      <div className="row">
-        <span className="muted grow">
-          {q.no} / {QUESTIONS.length}
-        </span>
-        <span className="muted">
-          {SECTIONS.map((s) => (s === q.section ? `[${s}]` : s)).join(' · ')}
-        </span>
+      <div className="section-path">
+        {SECTIONS.map((s, i) => (
+          <span key={s}>
+            {i > 0 && ' · '}
+            {s === q.section ? <b>{s}</b> : s}
+          </span>
+        ))}
       </div>
-      <div {...swipe} className="card" style={{ display: 'flex', flexDirection: 'column', gap: 14, padding: 16 }}>
-        <div style={{ fontSize: 32 }}>{q.icon}</div>
-        <h2 style={{ margin: 0, fontSize: 20, lineHeight: 1.4 }}>{q.title}</h2>
+      <div {...swipe} className="qform" style={{ display: 'flex', flexDirection: 'column', gap: 16, padding: 20 }}>
+        <div className="row">
+          <span className="q-no grow">No. {String(q.no).padStart(2, '0')}</span>
+          <span className="muted">
+            {q.no} / {QUESTIONS.length}
+          </span>
+        </div>
+        <h2 style={{ margin: 0, fontSize: 21, lineHeight: 1.45 }}>{q.title}</h2>
         <QuestionFields q={q} />
       </div>
       <div className="row" style={{ marginTop: 'auto' }}>

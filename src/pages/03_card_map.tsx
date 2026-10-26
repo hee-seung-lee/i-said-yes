@@ -47,7 +47,7 @@ export default function CardMap03() {
             </span>
           ))}
         </div>
-        <b style={{ fontWeight: 600 }}>
+        <b style={{ fontFamily: 'var(--serif)' }}>
           {plan.letter}안 · {plan.title} · 업체 {plan.picks.length}곳
         </b>
         {plan.picks.map((v) => {

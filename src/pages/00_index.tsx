@@ -1,6 +1,7 @@
 import { Link, useNavigate } from 'react-router-dom'
 import { BRAND } from '../brand'
 import { Layout } from '../components/Layout'
+import { FloralArch, FloralDivider } from '../components/Ornaments'
 import { useFirstPath } from '../components/flow'
 import { PIECES, STAGE_LABEL, TYPE_LABEL } from '../pieces'
 import { type PieceType, type Stage, useStore } from '../store'
@@ -19,18 +20,34 @@ export default function Index00() {
   return (
     <Layout wide>
       <section className="hero">
+        <FloralArch width={230} />
+        <span className="eyebrow">{BRAND.en}</span>
         <span className="badge">{BRAND.team}</span>
         <h1>{BRAND.name}</h1>
+        <span className="divider">
+          <FloralDivider />
+        </span>
         <p className="tagline">{BRAND.tagline}</p>
         <p className="sub">{BRAND.promise}</p>
+        <div className="row" style={{ marginTop: 8 }}>
+          <button className="primary" onClick={() => navigate(first)}>
+            준비 시작하기
+          </button>
+        </div>
       </section>
 
-      <section className="card" style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
-        <b style={{ fontWeight: 600 }}>조립해서 돌려 보기</b>
+      <section className="card" style={{ display: 'flex', flexDirection: 'column', gap: 12, padding: 20 }}>
+        <h3 style={{ margin: 0, fontSize: 18 }}>조각 이어 붙여 보기</h3>
+        <p className="sub" style={{ margin: 0 }}>
+          단계마다 대화형과 카드형 중 하나를 고르면 그 조합으로 처음부터 끝까지 이어져요.
+        </p>
         {STAGES.map((st) => (
           <div key={st} className="row" style={{ flexWrap: 'wrap' }}>
-            <span style={{ width: 130 }}>
-              {st} {STAGE_LABEL[st]}
+            <span style={{ width: 128, fontFamily: 'var(--serif)' }}>
+              <span className="mono" style={{ color: 'var(--gold)', marginRight: 6 }}>
+                {st}
+              </span>
+              {STAGE_LABEL[st]}
             </span>
             {TYPES.map((t) => (
               <span key={t} className={flow[st] === t ? 'chip on' : 'chip'} onClick={() => setFlow(st, t)}>
@@ -39,10 +56,8 @@ export default function Index00() {
             ))}
           </div>
         ))}
-        <div className="mono muted">
-          {STAGES.map((st) => `${st}_${flow[st]}`).join(' → ')}
-        </div>
-        <div className="row">
+        <div className="mono muted">{STAGES.map((st) => `${st}_${flow[st]}`).join('  →  ')}</div>
+        <div className="row" style={{ flexWrap: 'wrap' }}>
           <button className="primary" onClick={() => navigate(first)}>
             이 조합으로 시작
           </button>
@@ -59,16 +74,17 @@ export default function Index00() {
 
       {STAGES.map((st) => (
         <section key={st}>
-          <h3 style={{ margin: '8px 0' }}>
-            {st} {STAGE_LABEL[st]}
-          </h3>
+          <div className="section-title">
+            <span className="num">{st}</span>
+            <h3>{STAGE_LABEL[st]}</h3>
+          </div>
           <div className="grid-pieces">
             {PIECES.filter((p) => p.stage === st).map((p) => (
-              <Link key={p.path} to={`/${p.path}`} className="card" style={{ textDecoration: 'none', color: 'inherit' }}>
-                <div className="mono" style={{ color: 'var(--accent)' }}>
+              <Link key={p.path} to={`/${p.path}`} className="card piece-card">
+                <div className="mono" style={{ color: 'var(--gold)' }}>
                   {p.path}
                 </div>
-                <div style={{ fontWeight: 600, margin: '4px 0' }}>
+                <div style={{ fontFamily: 'var(--serif)', fontWeight: 700, margin: '6px 0 4px' }}>
                   {TYPE_LABEL[p.type]} · {p.title}
                 </div>
                 <div className="sub">{p.desc}</div>

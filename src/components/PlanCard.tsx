@@ -15,10 +15,9 @@ export function DuplicateNotice() {
 export function PlanCard({ plan, recommended, selected, detail, onSelect }: Props) {
   return (
     <div className={recommended || selected ? 'card rec' : 'card'} style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
-      <div className="row">
-        <b className="grow" style={{ fontWeight: 600 }}>
-          {plan.letter}안 · {plan.title}
-        </b>
+      <div className="row" style={{ alignItems: 'flex-end' }}>
+        <span className="plan-letter">{plan.letter}</span>
+        <span className="plan-title grow">{plan.title}</span>
         {recommended && <span className="badge">추천</span>}
         {selected && <span className="badge">선택함</span>}
       </div>
