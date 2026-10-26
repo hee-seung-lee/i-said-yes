@@ -22,9 +22,9 @@ export default function Index00() {
     <Layout wide>
       <section className="hero">
         <FloralArch width={230} />
-        <span className="eyebrow">{BRAND.en}</span>
         <span className="badge">{BRAND.team}</span>
         <h1>{BRAND.name}</h1>
+        <p className="hero-en">{BRAND.en}</p>
         <span className="divider">
           <FloralDivider />
         </span>
