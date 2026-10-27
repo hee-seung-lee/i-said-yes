@@ -1,10 +1,11 @@
 // 본식까지 남은 시간 카운터(개월·일·시간·분·초)와, 한 사람이 상대에게 달려가는 트랙.
-// 트랙은 본식 1년 전을 출발점으로 잡아 남은 날만큼 다가가고, 당일에는 둘이 만난다.
+// 트랙은 본식 1년 전을 출발점으로 잡아 남은 날만큼 다가가고, D-7 부터는 와락 안겨 있다.
 import { useEffect, useRef, useState } from 'react'
 import { celebrateFrom } from '../effects/petals'
-import { daysBetween, formatKDate } from '../logic/schedule'
+import { daysBetween } from '../logic/schedule'
 
 const TRACK_DAYS = 365
+const HUG_DAYS = 7 // 본식 7일 전부터는 와락 안겨 있다
 const RUNNER_KEY = 'i-said-yes:runner'
 
 type Who = 'groom' | 'bride'
@@ -95,7 +96,7 @@ function Bride() {
 
 function Person({ who }: { who: Who }) {
   return (
-    <svg viewBox="0 0 32 32" width="40" height="40" aria-hidden="true">
+    <svg viewBox="0 0 32 32" width="48" height="48" aria-hidden="true">
       {who === 'groom' ? <Groom /> : <Bride />}
     </svg>
   )
@@ -115,8 +116,8 @@ export function DdayRun({ wedding, ceremonyTime, today }: Props) {
   const target = wedding ? targetMs(wedding, ceremonyTime) : null
   const now = useNow(target !== null)
   const days = wedding ? daysBetween(today, wedding) : null
-  const together = days !== null && days <= 0
-  const progress = days === null ? 0 : together ? 1 : Math.min(1, Math.max(0, 1 - days / TRACK_DAYS))
+  const together = days !== null && days <= HUG_DAYS
+  const progress = days === null ? 0 : together ? 1 : Math.min(1, Math.max(0, 1 - (days - HUG_DAYS) / (TRACK_DAYS - HUG_DAYS)))
   const waiter: Who = runner === 'groom' ? 'bride' : 'groom'
 
   // 처음 그릴 때 출발점에서 지금 위치까지 달려 들어온다
@@ -125,11 +126,11 @@ export function DdayRun({ wedding, ceremonyTime, today }: Props) {
     return () => cancelAnimationFrame(id)
   }, [])
 
-  // 만나는 날에는 한 번 팡 터뜨린다
+  // 안기는 순간 한 번 팡 터뜨린다
   useEffect(() => {
     if (!together || met.current) return
     met.current = true
-    const id = window.setTimeout(() => celebrateFrom(pairRef.current, 1.2), 1300)
+    const id = window.setTimeout(() => celebrateFrom(pairRef.current, 1.2), 2100)
     return () => window.clearTimeout(id)
   }, [together])
 
@@ -143,54 +144,37 @@ export function DdayRun({ wedding, ceremonyTime, today }: Props) {
     }
   }
 
-  const label = days === null ? '' : days > 0 ? `D-${days}` : days === 0 ? 'D-day' : `D+${-days}`
+  const label = days === null ? '본식일 미정' : days > 0 ? `D-${days}` : days === 0 ? 'D-day' : `D+${-days}`
   const pos = (entered ? progress : 0) * 100
   const running = entered && !together && progress > 0
 
   return (
     <div className={`ddrun ${together ? 'met' : ''}`}>
-      <div className="ddrun-head">
-        <span className="ddrun-title">우리 결혼식까지</span>
-        <span className="ddrun-date">{wedding ? `${formatKDate(wedding)}${ceremonyTime ? ` ${ceremonyTime}` : ''} / ${label}` : '본식일 미정'}</span>
-      </div>
-      <div className={`ddrun-clock ${wedding ? '' : 'off'}`} aria-label={wedding ? `${label}` : '본식일 미정'}>
-        {(target !== null ? parts(now, target) : parts(0, 0))
-          .filter(([n, u]) => u !== '개월' || n > 0)
-          .map(([n, u]) => (
-            <span key={u} className="ddrun-cell">
-              <b>{n}</b>
-              <small>{u}</small>
-            </span>
-          ))}
-      </div>
+      {target === null ? (
+        <div className="ddrun-clock off">본식일을 정하면 카운트가 시작돼요</div>
+      ) : (
+        <div className="ddrun-clock" aria-label={label}>
+          {parts(now, target)
+            .filter(([n, u]) => u !== '개월' || n > 0)
+            .map(([n, u]) => (
+              <span key={u} className="ddrun-cell">
+                <b>{n}</b>
+                <small>{u}</small>
+              </span>
+            ))}
+        </div>
+      )}
 
-      <div className="ddrun-track">
+      <div className="ddrun-track" onClick={swap} title="누가 달릴지 바꾸기">
         <div className="ddrun-road" />
-        <div className="ddrun-trail" style={{ width: `calc((100% - 88px) * ${pos / 100} + 22px)` }} />
-        <div className={`ddrun-runner ${running ? 'running' : ''} ${runner}`} style={{ left: `calc((100% - 88px) * ${pos / 100})` }}>
+        <div className="ddrun-trail" style={{ width: `calc((100% - 106px) * ${pos / 100} + 24px)` }} />
+        <div className={`ddrun-runner ${running ? 'running' : ''} ${runner}`} style={{ left: `calc((100% - 106px) * ${pos / 100})` }}>
           <Person who={runner} />
         </div>
         <div className={`ddrun-waiter ${waiter}`} ref={pairRef}>
           <span className="ddrun-heart">♥</span>
           <Person who={waiter} />
         </div>
-      </div>
-      <div className="ddrun-foot">
-        <span>1년 전</span>
-        <span className="grow">
-          {days === null
-            ? '본식일을 정하면 달리기 시작해요'
-            : together
-              ? days === 0
-                ? '드디어 만났어요!'
-                : '함께 걷고 있어요'
-              : days > TRACK_DAYS
-                ? '출발선에서 기다리는 중'
-                : `${runner === 'groom' ? '신랑이' : '신부가'} 달려가는 중`}
-        </span>
-        <button className="ddrun-swap" onClick={swap} type="button">
-          {runner === 'groom' ? '신부가 달리기' : '신랑이 달리기'}
-        </button>
       </div>
     </div>
   )

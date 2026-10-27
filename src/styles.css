@@ -357,9 +357,6 @@ button.ghost.danger { color: var(--rose-deep); align-self: flex-start; }
 
 /* 디데이 카운터 + 달려가는 신랑·신부 */
 .ddrun { display: flex; flex-direction: column; gap: 6px; }
-.ddrun-head { display: flex; align-items: baseline; gap: 8px; flex-wrap: wrap; }
-.ddrun-title { font-family: var(--serif); font-weight: 700; font-size: 15px; color: var(--ink); }
-.ddrun-date { margin-left: auto; font-size: 12px; color: var(--ink-3); }
 .ddrun-clock {
   display: flex; justify-content: center; align-items: baseline; flex-wrap: wrap; gap: 2px 10px;
   font-family: var(--serif); font-variant-numeric: tabular-nums; line-height: 1.2; padding: 10px 0 2px;
@@ -371,14 +368,15 @@ button.ghost.danger { color: var(--rose-deep); align-self: flex-start; }
   -webkit-background-clip: text; background-clip: text; color: transparent;
 }
 .ddrun-cell small { font-size: 13px; color: var(--ink-2); }
-.ddrun-clock.off { opacity: 0.45; }
-.ddrun-track { position: relative; height: 64px; margin-top: 10px; }
-.ddrun-road { position: absolute; left: 22px; right: 22px; bottom: 10px; border-bottom: 2px dashed var(--gold-soft); }
+.ddrun-clock.off { font-size: 14px; color: var(--ink-3); }
+.ddrun-track { position: relative; height: 78px; margin-top: 4px; cursor: pointer; -webkit-tap-highlight-color: transparent; }
+.ddrun-road { position: absolute; left: 24px; right: 24px; bottom: 10px; border-bottom: 2px dashed var(--gold-soft); }
 .ddrun-trail { position: absolute; left: 0; bottom: 9px; height: 4px; border-radius: 2px; background: linear-gradient(90deg, transparent, var(--rose-soft) 30%, var(--rose)); transition: width 1.6s cubic-bezier(.3,.7,.3,1); }
-.ddrun-runner, .ddrun-waiter { position: absolute; bottom: 8px; width: 44px; display: flex; justify-content: center; }
+.ddrun-runner, .ddrun-waiter { position: absolute; bottom: 8px; width: 48px; display: flex; justify-content: center; }
 .ddrun-runner { left: 0; transition: left 1.6s cubic-bezier(.3,.7,.3,1); z-index: 1; }
 .ddrun-waiter { right: 0; flex-direction: column; align-items: center; }
-.ddrun-heart { color: var(--rose); font-size: 13px; line-height: 1; animation: ddrun-beat 1.4s ease-in-out infinite; }
+.ddrun-heart { color: var(--rose); font-size: 14px; line-height: 1; animation: ddrun-beat 1.4s ease-in-out infinite; }
+.ddrun svg { overflow: visible; }
 .ddrun svg path, .ddrun svg circle { stroke-width: 1.3; stroke-linecap: round; stroke-linejoin: round; }
 .ddrun .skin { fill: #f6e2d6; stroke: #c9a48f; }
 .ddrun .hair { fill: #5b4038; stroke: none; }
@@ -391,22 +389,65 @@ button.ghost.danger { color: var(--rose-deep); align-self: flex-start; }
 .ddrun .veil { fill: rgba(255, 253, 250, 0.9); stroke: var(--gold-soft); }
 .ddrun .dress { fill: #fffdfa; stroke: var(--gold); }
 .ddrun .flower { fill: var(--rose); stroke: none; }
-.ddrun .arm, .ddrun .leg { transform-box: fill-box; }
-.ddrun .arm { transform-origin: 50% 0%; }
+/* 팔은 어깨, 다리는 골반을 축으로 돈다. 양수 각도는 왼팔을, 음수 각도는 오른팔을 들어 올린다 */
+.ddrun .arm, .ddrun .leg { transform-box: fill-box; transition: transform 0.3s; }
+.ddrun .arm-a { transform-origin: 100% 0%; }
+.ddrun .arm-b { transform-origin: 0% 0%; }
 .ddrun .leg { transform-origin: 50% 0%; }
-.ddrun-runner.running svg { animation: ddrun-bob 0.36s ease-in-out infinite; }
-.ddrun-runner.running .leg-a, .ddrun-runner.running .arm-b { animation: ddrun-swing 0.36s ease-in-out infinite alternate; }
-.ddrun-runner.running .leg-b, .ddrun-runner.running .arm-a { animation: ddrun-swing 0.36s ease-in-out infinite alternate-reverse; }
-.ddrun.met .ddrun-runner svg, .ddrun.met .ddrun-waiter svg { animation: ddrun-hop 0.9s ease-in-out infinite; }
-.ddrun.met .ddrun-waiter svg { animation-delay: 0.45s; }
-.ddrun.met .ddrun-heart { font-size: 20px; }
-.ddrun-foot { display: flex; align-items: center; gap: 8px; font-size: 12px; color: var(--ink-2); }
-.ddrun-foot > span:first-child { color: var(--ink-3); }
-.ddrun-foot .grow { text-align: center; }
-.ddrun-swap { font-size: 11px; padding: 3px 8px; border-radius: 999px; }
-@keyframes ddrun-bob { 50% { transform: translateY(-3px); } }
-@keyframes ddrun-swing { from { transform: rotate(-28deg); } to { transform: rotate(28deg); } }
-@keyframes ddrun-hop { 0%, 100% { transform: translateY(0); } 30% { transform: translateY(-6px); } }
+
+/* 달리는 사람: 상대 쪽(오른쪽)으로 몸을 숙이고 오른팔을 뻗는다 */
+.ddrun-runner svg { transform-origin: 50% 100%; transform: rotate(9deg); }
+.ddrun-runner .arm-b { transform: rotate(-72deg); }
+.ddrun-runner .arm-a { transform: rotate(24deg); }
+.ddrun-runner.running svg { animation: ddrun-bob 0.36s ease-in-out 5; }
+.ddrun-runner.running .leg-a { animation: ddrun-swing 0.36s ease-in-out 5 alternate; }
+.ddrun-runner.running .leg-b { animation: ddrun-swing 0.36s ease-in-out 5 alternate-reverse; }
+.ddrun-runner.running .arm-b { animation: ddrun-reach 0.36s ease-in-out 5 alternate; }
+.ddrun-runner.running::before {
+  content: ''; position: absolute; left: -12px; top: 22px; width: 12px; height: 13px;
+  background: repeating-linear-gradient(to bottom, var(--gold) 0 2px, transparent 2px 5px); border-radius: 1px;
+  animation: ddrun-speed 0.36s linear 5 both;
+}
+/* 기다리는 사람: 두 팔을 벌리고 살짝 흔든다 */
+.ddrun-waiter .arm-a { transform: rotate(58deg); }
+.ddrun-waiter .arm-b { transform: rotate(-58deg); }
+.ddrun-waiter svg { transform-origin: 50% 100%; animation: ddrun-sway 1.6s ease-in-out infinite; }
+
+/* D-7 부터: 달려오다 와락 뛰어들어 안긴다 */
+.ddrun.met .ddrun-runner { transition: none; left: calc(100% - 80px); animation: ddrun-rush 2.2s cubic-bezier(.35,.1,.4,1) both; }
+.ddrun.met .ddrun-runner svg { animation: ddrun-leap 2.2s ease-in-out both, ddrun-hug 2.4s ease-in-out 2.3s infinite; }
+.ddrun.met .ddrun-runner .leg-a { animation: ddrun-swing 0.3s ease-in-out 5 alternate; }
+.ddrun.met .ddrun-runner .leg-b { animation: ddrun-swing 0.3s ease-in-out 5 alternate-reverse; }
+.ddrun.met .ddrun-runner .arm-b { transform: rotate(-96deg); }
+.ddrun.met .ddrun-runner .arm-a { transform: rotate(10deg); }
+.ddrun.met .ddrun-waiter svg { animation: ddrun-catch 2.2s ease-out both, ddrun-hug 2.4s ease-in-out 2.3s infinite; }
+.ddrun.met .ddrun-waiter .arm-a { animation: ddrun-embrace 2.2s ease-out both; }
+.ddrun.met .ddrun-trail { width: calc(100% - 56px) !important; }
+.ddrun.met .ddrun-heart { position: absolute; top: -20px; left: -8px; font-size: 22px; animation: ddrun-pop 2.4s ease-out both, ddrun-beat 1.2s ease-in-out 2.4s infinite; }
+@keyframes ddrun-bob { 0%, 100% { transform: rotate(12deg) translateY(0); } 50% { transform: rotate(12deg) translateY(-4px); } }
+@keyframes ddrun-swing { from { transform: rotate(-32deg); } to { transform: rotate(32deg); } }
+@keyframes ddrun-reach { from { transform: rotate(-86deg); } to { transform: rotate(-60deg); } }
+@keyframes ddrun-speed { 0% { opacity: 0; transform: translateX(4px); } 50% { opacity: 0.8; } 100% { opacity: 0; transform: translateX(-6px); } }
+@keyframes ddrun-sway { 0%, 100% { transform: rotate(-3deg); } 50% { transform: rotate(3deg); } }
+@keyframes ddrun-rush {
+  0% { left: 0; }
+  72% { left: calc(100% - 150px); }
+  100% { left: calc(100% - 80px); }
+}
+@keyframes ddrun-leap {
+  0%, 70% { transform: rotate(12deg) translateY(0); }
+  84% { transform: rotate(24deg) translateY(-22px); }
+  94% { transform: rotate(6deg) translateY(2px); }
+  100% { transform: rotate(4deg) translateY(0); }
+}
+@keyframes ddrun-catch {
+  0%, 88% { transform: rotate(0); }
+  94% { transform: translateX(5px) rotate(8deg); }
+  100% { transform: rotate(-4deg); }
+}
+@keyframes ddrun-embrace { 0%, 85% { transform: rotate(58deg); } 100% { transform: rotate(98deg); } }
+@keyframes ddrun-hug { 0%, 100% { transform: rotate(-3deg) translateY(0); } 25% { transform: rotate(-3deg) translateY(-4px); } 50% { transform: rotate(3deg) translateY(0); } 75% { transform: rotate(3deg) translateY(-4px); } }
+@keyframes ddrun-pop { 0%, 88% { opacity: 0; transform: scale(0.2); } 95% { opacity: 1; transform: scale(1.6); } 100% { opacity: 1; transform: scale(1); } }
 @keyframes ddrun-beat { 0%, 100% { transform: scale(1); } 50% { transform: scale(1.25); } }
 
 @media (prefers-reduced-motion: reduce) {
