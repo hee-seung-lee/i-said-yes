@@ -64,7 +64,7 @@ export function nextStage(stage: Stage): Stage | null {
 
 // 04 부터 아래쪽 탭으로 오간다
 export const HUB: { stage: Stage; label: string; icon: HubIconName }[] = [
-  { stage: '04', label: '할 일', icon: 'todo' },
+  { stage: '04', label: '할일', icon: 'todo' },
   { stage: '10', label: '장소', icon: 'place' },
   { stage: '05', label: '견적', icon: 'quote' },
   { stage: '06', label: '결정', icon: 'decide' },
