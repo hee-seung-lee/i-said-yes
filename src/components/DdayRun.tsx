@@ -1,11 +1,10 @@
-// 본식까지 남은 시간 카운터(일:시:분:초:1/100초)와, 한 사람이 상대에게 달려가는 트랙.
+// 본식까지 남은 시간 카운터(개월·일·시간·분·초)와, 한 사람이 상대에게 달려가는 트랙.
 // 트랙은 본식 1년 전을 출발점으로 잡아 남은 날만큼 다가가고, 당일에는 둘이 만난다.
 import { useEffect, useRef, useState } from 'react'
 import { celebrateFrom } from '../effects/petals'
 import { daysBetween, formatKDate } from '../logic/schedule'
 
 const TRACK_DAYS = 365
-const UNITS = ['일', '시', '분', '초', '1/100']
 const RUNNER_KEY = 'i-said-yes:runner'
 
 type Who = 'groom' | 'bride'
@@ -14,15 +13,32 @@ function targetMs(wedding: string, time: string | null): number {
   return Date.parse(`${wedding}T${time ?? '00:00'}:00+09:00`)
 }
 
-function parts(ms: number): string[] {
-  const t = Math.max(0, ms)
-  const cs = Math.floor(t / 10)
+// 서울 시각 기준으로 달(달력 개월) → 일 → 시간 → 분 → 초 순으로 나눈다
+function parts(now: number, target: number): [number, string][] {
+  if (target <= now) return [[0, '개월'], [0, '일'], [0, '시간'], [0, '분'], [0, '초']]
+  const KST = 9 * 3600 * 1000
+  const from = new Date(now + KST)
+  const addMonths = (n: number) => {
+    const d = new Date(from)
+    d.setUTCMonth(d.getUTCMonth() + n)
+    // 1월 31일 + 1개월처럼 달 끝을 넘기면 그 달 마지막 날로 맞춘다
+    if (d.getUTCDate() !== from.getUTCDate()) d.setUTCDate(0)
+    return d.getTime() - KST
+  }
+  let months = 0
+  while (addMonths(months + 1) <= target) months++
+  let s = Math.floor((target - addMonths(months)) / 1000)
+  const days = Math.floor(s / 86400)
+  s -= days * 86400
+  const hours = Math.floor(s / 3600)
+  s -= hours * 3600
+  const mins = Math.floor(s / 60)
   return [
-    String(Math.floor(cs / 8640000)).padStart(3, '0'),
-    String(Math.floor(cs / 360000) % 24).padStart(2, '0'),
-    String(Math.floor(cs / 6000) % 60).padStart(2, '0'),
-    String(Math.floor(cs / 100) % 60).padStart(2, '0'),
-    String(cs % 100).padStart(2, '0'),
+    [months, '개월'],
+    [days, '일'],
+    [hours, '시간'],
+    [mins, '분'],
+    [s - mins * 60, '초'],
   ]
 }
 
@@ -34,18 +50,13 @@ function readRunner(): Who {
   }
 }
 
-// 1/100초까지 매 프레임 갱신. 탭이 숨으면 브라우저가 알아서 멈춘다.
+// 초 단위 표시라 0.25초마다 갱신하면 넘어가는 순간을 놓치지 않는다
 function useNow(on: boolean): number {
   const [now, setNow] = useState(() => Date.now())
   useEffect(() => {
     if (!on) return
-    let id = 0
-    const tick = () => {
-      setNow(Date.now())
-      id = requestAnimationFrame(tick)
-    }
-    id = requestAnimationFrame(tick)
-    return () => cancelAnimationFrame(id)
+    const id = window.setInterval(() => setNow(Date.now()), 250)
+    return () => window.clearInterval(id)
   }, [on])
   return now
 }
@@ -103,7 +114,6 @@ export function DdayRun({ wedding, ceremonyTime, today }: Props) {
   const pairRef = useRef<HTMLDivElement>(null)
   const target = wedding ? targetMs(wedding, ceremonyTime) : null
   const now = useNow(target !== null)
-  const left = target !== null ? target - now : 0
   const days = wedding ? daysBetween(today, wedding) : null
   const together = days !== null && days <= 0
   const progress = days === null ? 0 : together ? 1 : Math.min(1, Math.max(0, 1 - days / TRACK_DAYS))
@@ -144,15 +154,14 @@ export function DdayRun({ wedding, ceremonyTime, today }: Props) {
         <span className="ddrun-date">{wedding ? `${formatKDate(wedding)}${ceremonyTime ? ` ${ceremonyTime}` : ''} / ${label}` : '본식일 미정'}</span>
       </div>
       <div className={`ddrun-clock ${wedding ? '' : 'off'}`} aria-label={wedding ? `${label}` : '본식일 미정'}>
-        {parts(left).map((p, i) => (
-          <span key={i} className="ddrun-cell">
-            {i > 0 && <i>:</i>}
-            <span className="ddrun-unit">
-              <b>{p}</b>
-              <small>{UNITS[i]}</small>
+        {(target !== null ? parts(now, target) : parts(0, 0))
+          .filter(([n, u]) => u !== '개월' || n > 0)
+          .map(([n, u]) => (
+            <span key={u} className="ddrun-cell">
+              <b>{n}</b>
+              <small>{u}</small>
             </span>
-          </span>
-        ))}
+          ))}
       </div>
 
       <div className="ddrun-track">

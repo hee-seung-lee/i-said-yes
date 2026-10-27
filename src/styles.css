@@ -361,19 +361,17 @@ button.ghost.danger { color: var(--rose-deep); align-self: flex-start; }
 .ddrun-title { font-family: var(--serif); font-weight: 700; font-size: 15px; color: var(--ink); }
 .ddrun-date { margin-left: auto; font-size: 12px; color: var(--ink-3); }
 .ddrun-clock {
-  display: flex; justify-content: center; flex-wrap: nowrap;
-  font-family: ui-monospace, 'SF Mono', Menlo, Consolas, monospace; font-variant-numeric: tabular-nums;
-  font-size: clamp(26px, 8.4vw, 44px); font-weight: 700; letter-spacing: 0.02em; line-height: 1.15;
-  background: linear-gradient(90deg, var(--gold) 0%, var(--rose) 55%, var(--rose-deep) 100%);
-  -webkit-background-clip: text; background-clip: text; color: transparent;
-  padding: 10px 0 0;
+  display: flex; justify-content: center; align-items: baseline; flex-wrap: wrap; gap: 2px 10px;
+  font-family: var(--serif); font-variant-numeric: tabular-nums; line-height: 1.2; padding: 10px 0 2px;
 }
-.ddrun-cell { display: flex; }
-.ddrun-unit { display: flex; flex-direction: column; align-items: center; }
-.ddrun-unit b { font-weight: 700; }
-.ddrun-unit small { font-family: var(--sans); font-size: 11px; font-weight: 400; letter-spacing: 0.04em; color: var(--ink-3); -webkit-text-fill-color: var(--ink-3); line-height: 1.4; }
-.ddrun-clock i { font-style: normal; opacity: 0.55; margin: 0 1px; }
-.ddrun-clock.off { background: none; color: var(--ink-3); opacity: 0.5; }
+.ddrun-cell { display: inline-flex; align-items: baseline; gap: 2px; }
+.ddrun-cell b {
+  font-size: clamp(26px, 8vw, 38px); font-weight: 700;
+  background: linear-gradient(135deg, var(--gold), var(--rose) 70%, var(--rose-deep));
+  -webkit-background-clip: text; background-clip: text; color: transparent;
+}
+.ddrun-cell small { font-size: 13px; color: var(--ink-2); }
+.ddrun-clock.off { opacity: 0.45; }
 .ddrun-track { position: relative; height: 64px; margin-top: 10px; }
 .ddrun-road { position: absolute; left: 22px; right: 22px; bottom: 10px; border-bottom: 2px dashed var(--gold-soft); }
 .ddrun-trail { position: absolute; left: 0; bottom: 9px; height: 4px; border-radius: 2px; background: linear-gradient(90deg, transparent, var(--rose-soft) 30%, var(--rose)); transition: width 1.6s cubic-bezier(.3,.7,.3,1); }
