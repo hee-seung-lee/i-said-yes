@@ -5,8 +5,10 @@ import { ANCHOR_LABEL, type AnchorKey, CATEGORIES, type Owner, type TaskRecord, 
 import { celebrateFrom } from '../effects/petals'
 import { removeFile } from '../logic/files'
 import { Attachments } from './Attachments'
+import { InviteSend } from './InviteSend'
 import { DistanceChips, LocationPicker } from './Places'
 import { needsPurchase } from '../logic/decide'
+import { inviteKindOf } from '../logic/invite'
 import { fmt, newId, toMan, toWon } from '../logic/money'
 import { buildPlans, recommendedKey } from '../logic/recommend'
 import {
@@ -140,10 +142,12 @@ export function TaskDetail({ item }: { item: TodoItem }) {
   const daysErr = validDays(Number(startD), Number(dueD))
   const others = tasks.filter((x) => x.id !== t.id && x.adopted && !t.dependencies.some((d) => d.taskId === x.id))
   const byId = new Map(tasks.map((x) => [x.id, x]))
+  const invite = inviteKindOf(t.title)
 
   return (
     <div className="task-detail">
       <TitleEditor task={t} />
+      {invite && <InviteSend kind={invite} />}
       <div className="field">
         <span className="field-label">분류 (여러 개 고를 수 있어요)</span>
         <div>

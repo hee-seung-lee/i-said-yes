@@ -9,6 +9,7 @@ import { type Anchors, EMPTY_ANCHORS, todaySeoul } from './logic/schedule'
 import { EMPTY_PLACES, type MyPlaceKey, type MyPlaces, type Place } from './logic/geo'
 import { type Attachment, removeFile } from './logic/files'
 import { PHOTO_RECEIPT_ID, SYNC_KEYS, photoReceiptPatch } from './logic/sync'
+import type { InviteDraft } from './logic/invite'
 
 export type Stage = '01' | '02' | '03' | '04' | '05' | '06' | '07' | '08' | '09' | '10'
 export type PieceType = 'chat' | 'card'
@@ -19,6 +20,7 @@ export interface Project {
   reserveBudget: number | null
   budgetScope: { house: boolean | null; goods: boolean | null; trip: boolean | null } // 총예산에 신혼집·혼수·여행 포함 여부
   places: MyPlaces // 우리 장소(신부·신랑 집·회사, 양가 본가) 대략 위치
+  invite?: InviteDraft // 청모·청첩장 보낼 문구와 모바일 청첩장 주소(없으면 기본 문구)
 }
 
 export interface DayOf {

@@ -454,6 +454,18 @@ button.ghost.danger { color: var(--rose-deep); align-self: flex-start; }
 .date-line svg { fill: none; stroke: var(--rose); stroke-width: 1.8; stroke-linecap: round; stroke-linejoin: round; }
 .date-edit { display: flex; flex-direction: column; gap: 10px; }
 .date-edit > button { align-self: flex-end; }
+.invite-send { display: flex; flex-direction: column; gap: 8px; padding: 12px; border-radius: 12px; background: var(--blush); border: 1px solid var(--line); }
+.invite-send textarea { width: 100%; }
+.invite-meta button { padding: 8px 14px; font-size: 13px; }
+.invite-buttons { display: grid; grid-template-columns: repeat(4, 1fr); gap: 6px; }
+.invite-buttons > * { padding: 10px 2px; font-size: 13px; text-align: center; white-space: nowrap; }
+.invite-buttons .kakao { background: #fee500; border-color: #fee500; color: #191919; }
+.invite-buttons .kakao:hover { background: #f5dc00; }
+a.button-like {
+  display: inline-block; color: var(--ink); text-decoration: none; border: 1px solid var(--line-strong);
+  border-radius: 999px; background: transparent; transition: background 0.15s;
+}
+a.button-like:hover { background: #fff; }
 
 @media (prefers-reduced-motion: reduce) {
   * { transition: none !important; }
