@@ -1,7 +1,7 @@
+import { DdayRun } from '../components/DdayRun'
 import { Layout } from '../components/Layout'
 import { TaskRow, useTodos } from '../components/Timeline'
 import { fmt } from '../logic/money'
-import { daysBetween, formatKDate } from '../logic/schedule'
 import { useStore } from '../store'
 
 // 본식 당일 준비물(일반적인 목록. 필요 없는 건 체크하지 않으면 된다)
@@ -58,15 +58,12 @@ export default function CardDayOf08() {
   }
   const packDone = PACKING.flatMap((g) => g.items).filter((i) => dayof.checked[i]).length
   const packTotal = PACKING.flatMap((g) => g.items).length
-  const d = anchors.wedding ? daysBetween(today, anchors.wedding) : null
 
   return (
     <Layout piece="08_card_dayof" hub>
-      <section className="card" style={{ padding: 18 }}>
+      <section className="card" style={{ display: 'flex', flexDirection: 'column', gap: 10, padding: 18 }}>
         <h3 style={{ margin: 0 }}>본식 체크</h3>
-        <div className="sub">
-          {anchors.wedding ? `${formatKDate(anchors.wedding)} · ${d! > 0 ? `${d}일 남음` : d === 0 ? '오늘이에요!' : '지났어요'}` : '본식일을 정하면 날짜가 함께 보여요'}
-        </div>
+        <DdayRun wedding={anchors.wedding} ceremonyTime={dayof.ceremonyTime} today={today} />
       </section>
 
       <div className="section-title">

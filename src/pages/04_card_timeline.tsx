@@ -1,10 +1,10 @@
 import { useState } from 'react'
+import { DdayRun } from '../components/DdayRun'
 import { Layout } from '../components/Layout'
 import {
   AnchorInputs,
   CalendarView,
   ConflictPanel,
-  Dday,
   LateStartPanel,
   MilestonePanel,
   Readiness,
@@ -13,6 +13,7 @@ import {
   useTodos,
 } from '../components/Timeline'
 import { AddTaskForm, CategoryFilter, GanttView, StatusBoard, byCategory } from '../components/Views'
+import { useStore } from '../store'
 import { PHASES, type PhaseId } from '../data/tasks'
 
 type View = 'list' | 'board' | 'gantt' | 'calendar'
@@ -27,6 +28,7 @@ const VIEWS: { id: View; label: string }[] = [
 // PRD 화면: 오늘 할 일 + 전체 타임라인(본식일 미정이면 상대 일정, 있으면 날짜·달력)
 export default function CardTimeline04() {
   const { plan, items, picks, ready: rd, today, anchors } = useTodos()
+  const ceremonyTime = useStore((s) => s.dayof.ceremonyTime)
   const [phase, setPhase] = useState<PhaseId>(() => picks[0]?.item.phase ?? 'p1')
   const [view, setView] = useState<View>('list')
   const [showExcluded, setShowExcluded] = useState(false)
@@ -42,7 +44,7 @@ export default function CardTimeline04() {
   return (
     <Layout piece="04_card_timeline" hub>
       <section className="card" style={{ display: 'flex', flexDirection: 'column', gap: 12, padding: 18 }}>
-        <Dday anchors={anchors} today={today} />
+        <DdayRun wedding={anchors.wedding} ceremonyTime={ceremonyTime} today={today} />
         <AnchorInputs only={['wedding']} />
         <details className="more-anchors">
           <summary>다른 기준일 넣기 (상견례·촬영·입주·출국)</summary>
