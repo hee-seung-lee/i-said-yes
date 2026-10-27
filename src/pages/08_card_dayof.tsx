@@ -1,7 +1,9 @@
+import { useState } from 'react'
 import { DdayRun } from '../components/DdayRun'
 import { Layout } from '../components/Layout'
-import { TaskRow, useTodos } from '../components/Timeline'
+import { AnchorInputs, TaskRow, useTodos } from '../components/Timeline'
 import { fmt } from '../logic/money'
+import { formatKDate } from '../logic/schedule'
 import { useStore } from '../store'
 
 // 본식 당일 준비물(일반적인 목록. 필요 없는 건 체크하지 않으면 된다)
@@ -30,6 +32,36 @@ function addMin(hhmm: string, min: number): string {
   const [h, m] = hhmm.split(':').map(Number)
   const t = (((h * 60 + m + min) % 1440) + 1440) % 1440
   return `${String(Math.floor(t / 60)).padStart(2, '0')}:${String(t % 60).padStart(2, '0')}`
+}
+
+// 카운터 아래 날짜 한 줄. 누르면 그 자리에서 본식일·식 시작 시각을 고친다(본식일은 할일 화면과 같은 재계산 미리보기를 거친다).
+function WeddingDateLine() {
+  const wedding = useStore((s) => s.project.anchors.wedding)
+  const ceremonyTime = useStore((s) => s.dayof.ceremonyTime)
+  const setDayOf = useStore((s) => s.setDayOf)
+  const [open, setOpen] = useState(false)
+
+  if (!open)
+    return (
+      <button type="button" className="date-line" onClick={() => setOpen(true)}>
+        {wedding ? `${formatKDate(wedding)}${ceremonyTime ? ` ${ceremonyTime}` : ''}` : '본식일 정하기'}
+        <svg viewBox="0 0 24 24" width="15" height="15" aria-hidden="true">
+          <path d="M4 20h4L19 9l-4-4L4 16zM13.5 6.5l4 4" />
+        </svg>
+      </button>
+    )
+  return (
+    <div className="date-edit">
+      <AnchorInputs only={['wedding']} />
+      <label className="field">
+        <span className="field-label">식 시작 시각</span>
+        <input id="ceremony-time" type="time" value={ceremonyTime ?? ''} onChange={(e) => setDayOf({ ceremonyTime: e.target.value || null })} />
+      </label>
+      <button type="button" onClick={() => setOpen(false)}>
+        닫기
+      </button>
+    </div>
+  )
 }
 
 // PRD 화면: 본식 체크. 마지막 주 할 일·업체 최종 확인·준비물·당일 진행표
@@ -64,6 +96,7 @@ export default function CardDayOf08() {
       <section className="card" style={{ display: 'flex', flexDirection: 'column', gap: 10, padding: 18 }}>
         <h3 style={{ margin: 0 }}>본식 체크</h3>
         <DdayRun wedding={anchors.wedding} ceremonyTime={dayof.ceremonyTime} today={today} />
+        <WeddingDateLine />
       </section>
 
       <div className="section-title">
@@ -119,10 +152,7 @@ export default function CardDayOf08() {
         <h3>당일 진행표</h3>
       </div>
       <section className="card" style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
-        <label className="field">
-          <span className="field-label">본식 시작 시각</span>
-          <input id="ceremony-time" type="time" value={dayof.ceremonyTime ?? ''} onChange={(e) => setDayOf({ ceremonyTime: e.target.value || null })} />
-        </label>
+        {!dayof.ceremonyTime && <span className="muted">맨 위 날짜 줄에서 식 시작 시각을 넣으면 시각으로 보여요.</span>}
         <ol className="dayline">
           {TIMELINE.map(([min, label]) => (
             <li key={label} className={min === 0 ? 'main' : ''}>
