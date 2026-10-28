@@ -1,6 +1,6 @@
 import { useState } from 'react'
 import { Layout } from '../components/Layout'
-import { AnchorInputs, LateStartPanel, Readiness, TaskRow, TodayCard, useTodos } from '../components/Timeline'
+import { AnchorInputs, CalendarView, LateStartPanel, Readiness, TaskRow, TodayCard, useTodos } from '../components/Timeline'
 import { PHASES } from '../data/tasks'
 import { daysBetween, formatKDate } from '../logic/schedule'
 import { phaseLabel } from '../logic/todo'
@@ -8,7 +8,8 @@ import { phaseLabel } from '../logic/todo'
 export default function ChatTimeline04() {
   const { plan, items, picks, ready: rd, today, anchors } = useTodos()
   const [dateAnswered, setDateAnswered] = useState(() => anchors.wedding !== null)
-  const [showAll, setShowAll] = useState(false)
+  const [more, setMore] = useState<'none' | 'calendar' | 'list'>('none')
+  const toggle = (v: 'calendar' | 'list') => setMore((m) => (m === v ? 'none' : v))
 
   const currentIdx = PHASES.findIndex((p) => p.id === (picks[0]?.item.phase ?? 'p1'))
   const nextPhase = PHASES[currentIdx + 1]
@@ -58,10 +59,24 @@ export default function ChatTimeline04() {
                 </ul>
               </div>
             )}
-            <div className="row" style={{ justifyContent: 'flex-end' }}>
-              <button onClick={() => setShowAll((v) => !v)}>{showAll ? '전체 일정 접기' : '전체 일정 펼치기'}</button>
+            <div className="row" style={{ justifyContent: 'flex-end', flexWrap: 'wrap' }}>
+              <button className={more === 'calendar' ? 'on' : ''} onClick={() => toggle('calendar')}>
+                {more === 'calendar' ? '달력 접기' : '달력으로 보기'}
+              </button>
+              <button className={more === 'list' ? 'on' : ''} onClick={() => toggle('list')}>
+                {more === 'list' ? '전체 일정 접기' : '전체 일정 펼치기'}
+              </button>
             </div>
-            {showAll &&
+            {more === 'calendar' &&
+              (anchors.wedding ? (
+                <>
+                  <div className="bubble">달력 숫자는 그날 마감인 일 수예요. 날짜를 누르면 그날 할 일이 나와요.</div>
+                  <CalendarView items={items} today={today} />
+                </>
+              ) : (
+                <div className="bubble">본식 날짜를 정하면 할 일 마감을 달력에 찍어 드려요. 위의 날짜 답을 눌러 정해 주세요.</div>
+              ))}
+            {more === 'list' &&
               PHASES.map((p) => (
                 <div key={p.id} className="card task-list">
                   <div className="section-title" style={{ margin: '10px 0 0' }}>

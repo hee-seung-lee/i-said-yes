@@ -54,6 +54,7 @@ button:focus-visible, .chip:focus-visible, input:focus-visible { outline: 2px so
 button.primary { background: var(--rose); border-color: var(--rose); color: #fff; letter-spacing: 0.02em; }
 button.primary:hover { background: var(--rose-deep); border-color: var(--rose-deep); }
 button:disabled { opacity: 0.45; cursor: default; }
+button.on { border-color: var(--rose); color: var(--rose-deep); background: var(--rose-soft); }
 
 /* 앱 한 장. 넓은 화면에서는 종이처럼 가운데 놓인다. */
 /* 반투명 종이 패널: 뒤의 꽃잎이 흐릿하게 비친다 */
