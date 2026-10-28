@@ -33,14 +33,14 @@ export const TYPE_LABEL: Record<PieceType, string> = {
 }
 
 export const PIECES: Piece[] = [
-  { path: '01_chat_checklist', stage: '01', type: 'chat', feature: 'checklist', title: '대화로 묻는 체크리스트', desc: '질문을 말풍선으로 하나씩 묻고 칩으로 답한다' },
   { path: '01_card_checklist', stage: '01', type: 'card', feature: 'checklist', title: '카드 넘기는 체크리스트', desc: '질문 하나가 카드 한 장, 타일을 골라 넘긴다' },
-  { path: '02_chat_plans', stage: '02', type: 'chat', feature: 'plans', title: '대화 속 3안 카드', desc: '정리된 3안을 말풍선 안 카드로 보여 주고 고른다' },
+  { path: '01_chat_checklist', stage: '01', type: 'chat', feature: 'checklist', title: '대화로 묻는 체크리스트', desc: '질문을 말풍선으로 하나씩 묻고 칩으로 답한다' },
   { path: '02_card_plans', stage: '02', type: 'card', feature: 'plans', title: '넘겨 보는 3안 카드', desc: 'A·B·C 탭과 스와이프로 한 안씩 크게 본다' },
-  { path: '03_chat_map', stage: '03', type: 'chat', feature: 'map', title: '대화 속 지도', desc: '고른 안의 업체 위치와 다음 할 일을 말풍선으로' },
+  { path: '02_chat_plans', stage: '02', type: 'chat', feature: 'plans', title: '대화 속 3안 카드', desc: '정리된 3안을 말풍선 안 카드로 보여 주고 고른다' },
   { path: '03_card_map', stage: '03', type: 'card', feature: 'map', title: '지도 + 바텀시트', desc: '지도를 크게, 업체 목록은 아래 시트로' },
-  { path: '04_chat_timeline', stage: '04', type: 'chat', feature: 'timeline', title: '대화로 챙기는 할 일', desc: '오늘 할 일 3개와 다음 단계를 말풍선으로 알려 준다' },
+  { path: '03_chat_map', stage: '03', type: 'chat', feature: 'map', title: '대화 속 지도', desc: '고른 안의 업체 위치와 다음 할 일을 말풍선으로' },
   { path: '04_card_timeline', stage: '04', type: 'card', feature: 'timeline', title: '오늘 할 일·전체 타임라인', desc: 'D-day 역산, 달력, 업무 상세 편집, 압축 계획, 선행 관계' },
+  { path: '04_chat_timeline', stage: '04', type: 'chat', feature: 'timeline', title: '대화로 챙기는 할 일', desc: '오늘 할 일 3개와 다음 단계를 말풍선으로 알려 준다' },
   { path: '05_card_quotes', stage: '05', type: 'card', feature: 'quotes', title: '견적 비교', desc: '후보 최대 3곳을 같은 조건으로, 추가금 미확인은 최소금액' },
   { path: '06_card_decide', stage: '06', type: 'card', feature: 'decide', title: '결정 도우미', desc: '추천 1개·대안·이유, 보류와 재검토, 계약 확인' },
   { path: '07_card_budget', stage: '07', type: 'card', feature: 'budget', title: '예산', desc: '예상 비용·지급·잔금, 총예산 범위와 예비비' },

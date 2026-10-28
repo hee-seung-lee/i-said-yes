@@ -9,7 +9,7 @@ import { type PieceType, type Stage, useStore } from '../store'
 
 const STAGES: Stage[] = ['01', '02', '03', '04']
 const TOOL_STAGES: Stage[] = ['10', '05', '06', '07', '08', '09']
-const TYPES: PieceType[] = ['chat', 'card']
+const TYPES: PieceType[] = ['card', 'chat']
 
 // 조각 목록 + 조립기. 단계마다 타입을 골라 이어 붙인 흐름을 바로 돌려 본다.
 export default function Index00() {
@@ -47,7 +47,7 @@ export default function Index00() {
       <section className="card" style={{ display: 'flex', flexDirection: 'column', gap: 12, padding: 20 }}>
         <h3 style={{ margin: 0, fontSize: 18 }}>조각 이어 붙여 보기</h3>
         <p className="sub" style={{ margin: 0 }}>
-          단계마다 대화형과 카드형 중 하나를 고르면 그 조합으로 처음부터 끝까지 이어져요.
+          단계마다 카드형과 대화형 중 하나를 고르면 그 조합으로 처음부터 끝까지 이어져요.
         </p>
         {STAGES.map((st) => (
           <div key={st} className="row" style={{ flexWrap: 'wrap' }}>

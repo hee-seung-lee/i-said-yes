@@ -79,7 +79,8 @@ export type PersistedShape = Pick<State, 'answers' | 'answerFiles' | 'progress' 
 // 5: 업무 메모·액션 아이템·문서 링크, 사용자 업무 추가·삭제. 4 의 업무에 빈 값을 채운다
 // 6: 우리 장소(project.places), 견적 위치·증빙 파일
 // 7: 체크리스트 참고 사진(answerFiles), 수령 희망일 → 보정본 수령 일정
-export const SCHEMA_VERSION = 7
+// 8: 기본 화면을 카드형으로. 전에 고른 대화형도 한 번 카드형으로 되돌린다
+export const SCHEMA_VERSION = 8
 
 const defaultFlow: Record<Stage, PieceType> = { '01': 'card', '02': 'card', '03': 'card', '04': 'card', '05': 'card', '06': 'card', '07': 'card', '08': 'card', '09': 'card', '10': 'card' }
 const freshProject = (): Project => ({ anchors: { ...EMPTY_ANCHORS }, totalBudget: null, reserveBudget: null, budgetScope: { house: null, goods: null, trip: null }, places: { ...EMPTY_PLACES } })
@@ -216,6 +217,7 @@ export const useStore = create<State>()(
         if (version < 5) {
           out.tasks = (out.tasks as TaskRecord[]).map((t) => withDefaults(t.id === 'M05' ? { ...t, categories: ['본식 준비'] } : t))
         }
+        if (version < 8) out.flow = defaultFlow
         if (version < 7) out.answerFiles = (s.answerFiles as object) ?? {}
         if (version < 6) {
           const p = out.project as Project
