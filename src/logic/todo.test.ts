@@ -2,7 +2,7 @@ import { describe, expect, it } from 'vitest'
 import { seedTasks } from '../data/tasks'
 import { buildPlans } from './recommend'
 import { EMPTY_ANCHORS } from './schedule'
-import { buildTodos, readiness, todayPicks } from './todo'
+import { buildTodos, currentPhase, readiness, todayPicks } from './todo'
 
 const answers = { 'q05.mood': ['garden'], 'q12.material': ['silk'], 'q04.region': ['gangnam'], 'q09.place': ['jeju'] }
 const plan = buildPlans(answers)[0]
@@ -58,5 +58,18 @@ describe('todo', () => {
     const item = buildTodos(ts, answers, plan, EMPTY_ANCHORS, today).find((i) => i.task.id === 'T09')!
     expect(item.onHold).toBe(true)
     expect(item.next).toContain('양가 의견')
+  })
+})
+
+describe('지금 시기', () => {
+  it('본식까지 남은 날로 단계를 고른다', () => {
+    expect(currentPhase('2026-10-28', '2027-05-15')).toBe('p2') // 199일
+    expect(currentPhase('2027-05-01', '2027-05-15')).toBe('p5')
+    expect(currentPhase('2027-05-15', '2027-05-15')).toBe('p5')
+    expect(currentPhase('2026-01-01', '2027-05-15')).toBe('p1')
+  })
+  it('본식일이 없거나 지났으면 표시하지 않는다', () => {
+    expect(currentPhase('2026-10-28', null)).toBeNull()
+    expect(currentPhase('2027-05-16', '2027-05-15')).toBeNull()
   })
 })

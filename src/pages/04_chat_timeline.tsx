@@ -1,9 +1,9 @@
 import { useState } from 'react'
 import { Layout } from '../components/Layout'
-import { AnchorInputs, CalendarView, LateStartPanel, Readiness, TaskRow, TodayCard, useTodos } from '../components/Timeline'
+import { AnchorInputs, CalendarView, LateStartPanel, NowMark, Readiness, TaskRow, TodayCard, useTodos } from '../components/Timeline'
 import { PHASES } from '../data/tasks'
 import { daysBetween, formatKDate } from '../logic/schedule'
-import { phaseLabel } from '../logic/todo'
+import { currentPhase, phaseLabel } from '../logic/todo'
 
 export default function ChatTimeline04() {
   const { plan, items, picks, ready: rd, today, anchors } = useTodos()
@@ -14,6 +14,7 @@ export default function ChatTimeline04() {
   const currentIdx = PHASES.findIndex((p) => p.id === (picks[0]?.item.phase ?? 'p1'))
   const nextPhase = PHASES[currentIdx + 1]
   const upcoming = nextPhase ? items.filter((i) => i.phase === nextPhase.id && i.task.status !== '완료' && !i.task.excluded).slice(0, 4) : []
+  const nowPhase = currentPhase(today, anchors.wedding)
   const d = anchors.wedding ? daysBetween(today, anchors.wedding) : null
 
   return (
@@ -80,7 +81,10 @@ export default function ChatTimeline04() {
               PHASES.map((p) => (
                 <div key={p.id} className="card task-list">
                   <div className="section-title" style={{ margin: '10px 0 0' }}>
-                    <h3 style={{ fontSize: 15 }}>{p.label}</h3>
+                    <h3 style={{ fontSize: 15 }}>
+                      {p.id === nowPhase && <NowMark />}
+                      {p.label}
+                    </h3>
                   </div>
                   {items
                     .filter((i) => i.phase === p.id && !i.task.excluded)

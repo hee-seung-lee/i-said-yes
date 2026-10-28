@@ -7,6 +7,7 @@ import {
   ConflictPanel,
   LateStartPanel,
   MilestonePanel,
+  NowMark,
   Readiness,
   TaskRow,
   TodayCard,
@@ -15,6 +16,7 @@ import {
 import { AddTaskForm, CategoryFilter, GanttView, StatusBoard, byCategory } from '../components/Views'
 import { useStore } from '../store'
 import { PHASES, type PhaseId } from '../data/tasks'
+import { currentPhase } from '../logic/todo'
 
 type View = 'list' | 'board' | 'gantt' | 'calendar'
 // 노션 보기(표·상태별·타임라인)와 맞춘 보기 전환. 달력은 본식일이 있을 때만.
@@ -39,6 +41,7 @@ export default function CardTimeline04() {
   const inPhase = visible.filter((i) => i.phase === phase).sort((a, b) => b.r.startDays - a.r.startDays)
   const leftIn = (id: PhaseId) => filtered.filter((i) => i.phase === id && i.task.status !== '완료' && !i.task.excluded).length
   const views = VIEWS.filter((v) => v.id !== 'calendar' || anchors.wedding)
+  const nowPhase = currentPhase(today, anchors.wedding)
   const excludedCount = items.filter((i) => i.task.excluded).length
 
   return (
@@ -91,6 +94,7 @@ export default function CardTimeline04() {
           <div className="tabs">
             {PHASES.map((p) => (
               <span key={p.id} className={p.id === phase ? 'chip on' : 'chip'} onClick={() => setPhase(p.id)}>
+                {p.id === nowPhase && <NowMark />}
                 {p.label}
                 {leftIn(p.id) > 0 && <span className="count">{leftIn(p.id)}</span>}
               </span>

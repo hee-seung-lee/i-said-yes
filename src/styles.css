@@ -468,7 +468,14 @@ a.button-like {
 }
 a.button-like:hover { background: #fff; }
 
+/* 단계 탭의 '지금 이 시기' 표시: 로즈 점과 천천히 퍼지는 고리 */
+.now-mark { display: inline-flex; vertical-align: -2px; margin-right: 2px; }
+.now-mark .now-dot { fill: var(--rose); }
+.now-mark .now-ring { fill: none; stroke: var(--rose); stroke-width: 1.2; transform-origin: 8px 8px; animation: now-pulse 2.4s ease-out infinite; }
+@keyframes now-pulse { 0% { transform: scale(0.5); opacity: 0.9; } 100% { transform: scale(1.15); opacity: 0; } }
+
 @media (prefers-reduced-motion: reduce) {
   * { transition: none !important; }
   .ddrun * { animation: none !important; }
+  .now-mark .now-ring { animation: none; opacity: 0.6; }
 }

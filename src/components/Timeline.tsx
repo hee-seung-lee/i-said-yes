@@ -445,6 +445,18 @@ function DeleteTask({ task }: { task: TaskRecord }) {
   )
 }
 
+// 전체 타임라인 단계 탭에 붙는 '지금 이 시기' 표시
+export function NowMark() {
+  return (
+    <span className="now-mark" role="img" aria-label="지금 시기" title="지금 시기">
+      <svg viewBox="0 0 16 16" width="14" height="14" aria-hidden="true">
+        <circle cx="8" cy="8" r="6.5" className="now-ring" />
+        <circle cx="8" cy="8" r="3.2" className="now-dot" />
+      </svg>
+    </span>
+  )
+}
+
 export function TodayCard({ pick, index }: { pick: Pick; index: number }) {
   const { item, reason } = pick
   const [msg, setMsg] = useState('')

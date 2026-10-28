@@ -159,3 +159,10 @@ export function todayPicks(items: TodoItem[], anchors: Anchors, today: string): 
 export function phaseLabel(id: PhaseId): string {
   return PHASES.find((p) => p.id === id)!.label
 }
+
+// 오늘이 속한 단계. 본식일이 없거나 이미 지났으면 알 수 없어 null
+export function currentPhase(today: string, wedding: string | null): PhaseId | null {
+  if (!wedding) return null
+  const d = daysBetween(today, wedding)
+  return d < 0 ? null : phaseOf(d)
+}
