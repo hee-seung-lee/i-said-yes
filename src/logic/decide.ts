@@ -8,8 +8,8 @@ export const MAX_CANDIDATES = 3
 
 // 구매·예약이 필요한 업무(견적 비교 대상)
 export const PURCHASE_TASKS = new Set([
-  'T07', 'T08', 'T09', 'T10', 'T11', 'T12', 'T13', 'T16', 'T17', 'T18', 'T19', 'T20', 'T21',
-  'T28', 'T29', 'T40', 'T41', 'T42', 'T43', 'T47', 'T50',
+  'T03', 'T07', 'T08', 'T09', 'T10', 'T11', 'T12', 'T13', 'T16', 'T17', 'T18', 'T19', 'T20', 'T21',
+  'T28', 'T29', 'T33', 'T40', 'T41', 'T42', 'T43', 'T47', 'T50',
 ])
 
 export function needsPurchase(t: TaskRecord): boolean {
